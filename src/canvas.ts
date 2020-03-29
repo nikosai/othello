@@ -30,7 +30,7 @@ export class BoardCanvas{
   }
 
   drawBoard() {
-    const redOverlay = 'rgba(255,0,0,0.5)';
+    const redOverlay = 'rgba(255,0,0,0.3)';
     const grayOverlay = 'rgba(0,0,0,0.2)';
     
     let res: Vec2[] = [];
@@ -41,10 +41,26 @@ export class BoardCanvas{
     for (let y = 0; y < this.board.height; y++) {
       for (let x = 0; x < this.board.width; x++) {
         this.fillSquare('green', x, y);
-        this.drawStone(x, y);
+        const st = this.board.get(x, y);
+        if (st !== State.Empty) {
+          this.drawStone(
+            (st === State.Black ? 'black' : 'white'),
+            'black',
+            0.003,
+            0.8,
+            x, y);
+        }
 
         if (this.mouse_at) {
           if (this.mouse_at.equals(x, y)) {
+            if (this.board.get(x, y) === State.Empty) {
+              this.drawStone(
+                (this.board.curState === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
+                'rgba(0,0,0,0.3)',
+                0.003,
+                0.65,
+                x, y);
+            }
             this.fillSquare((res.length > 0 ? redOverlay : grayOverlay), x, y);
           } else if (Vec2.in(res,x,y)) {
             this.fillSquare(redOverlay, x, y);
@@ -60,25 +76,20 @@ export class BoardCanvas{
     this.fillRectPercent(fillStyle, left, top, this.square_size.width, this.square_size.height);
   }
 
-  drawStone(x: number, y: number) {
-    const st = this.board.get(x, y);
-    if (st !== State.Empty) {
-      this.drawEllipseAtPercent(
-        (st === State.Black ? 'black' : 'white'),
-        'black',
-        0.003 * (this.elem.height + this.elem.width) / 2,
-        (2*x+1)/(2*this.board.width),
-        (2*y+1)/(2*this.board.height),
-        this.square_size.width * 0.8,
-        this.square_size.height * 0.8
-      );
-    }
+  drawStone(fillStyle: string | CanvasGradient | CanvasPattern, strokeStyle: string | CanvasGradient | CanvasPattern, lineWidth: number, scale: number, x: number, y: number) {
+    this.drawEllipseAtPercent(
+      fillStyle,
+      strokeStyle,
+      lineWidth * (this.elem.height + this.elem.width) / 2,
+      (2*x+1)/(2*this.board.width),
+      (2*y+1)/(2*this.board.height),
+      this.square_size.width * scale,
+      this.square_size.height * scale
+    );
   }
 
   onClick(x: number, y: number) {
-    if (x < 0 || x >= this.board.width || y < 0 || y >= this.board.height) {
-      
-    } else {
+    if (x >= 0 && x < this.board.width && y >= 0 && y < this.board.height) {
       this.board.put(x, y);
     }
   }

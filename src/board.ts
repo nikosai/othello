@@ -26,10 +26,10 @@ export class Board {
     return this.sqs[x + 1][y + 1];
   }
   init() {
-    this.set(3, 3, State.Black);
-    this.set(4, 4, State.Black);
-    this.set(3, 4, State.White);
-    this.set(4, 3, State.White);
+    this.set(3, 3, State.White);
+    this.set(4, 4, State.White);
+    this.set(3, 4, State.Black);
+    this.set(4, 3, State.Black);
   }
   put(x: number, y: number) {
     const res = this.check(x, y);
