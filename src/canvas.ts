@@ -90,7 +90,8 @@ export class BoardCanvas{
 
   onClick(x: number, y: number) {
     if (x >= 0 && x < this.board.width && y >= 0 && y < this.board.height) {
-      this.board.put(x, y);
+      const board = this.board.put(x, y);
+      if (board) this.board = board;
     }
   }
 
@@ -99,7 +100,7 @@ export class BoardCanvas{
       this.mouse_at = null;
     } else {
       this.mouse_at = new Vec2(x, y);
-    } 
+    }
   }
 
   fillRectPercent(fillStyle: string | CanvasGradient | CanvasPattern, x: number, y: number, w: number, h: number) {
