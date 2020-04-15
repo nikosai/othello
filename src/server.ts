@@ -4,6 +4,6 @@ const app = express();
 
 app.use(express.static("docs"));
 
-app.listen(3000, () => {
-  console.log("Listening *:3000")
+app.listen(80, () => {
+  console.log("Listening *:80")
 })
