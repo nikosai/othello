@@ -18,8 +18,8 @@ import { BoardCanvas } from "./canvas";
     Util.assertIsDefined(canvasWrapper);
     
     // resize
-    canvas.width = canvasWrapper.clientWidth;
-    canvas.height = canvasWrapper.clientHeight;
+    canvas.width = canvasWrapper.clientWidth * window.devicePixelRatio;
+    canvas.height = canvasWrapper.clientHeight * window.devicePixelRatio;
 
     // update
     boardCanvas.drawBoard();

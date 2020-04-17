@@ -20,8 +20,8 @@ export class BoardCanvas{
       const rect = this.elem.getBoundingClientRect();
       const x = e.clientX - Math.floor(rect.left);
       const y = e.clientY - Math.floor(rect.top);
-      const i = Math.floor(x / this.elem.width * this.board.width);
-      const j = Math.floor(y / this.elem.height * this.board.height);
+      const i = Math.floor(x / this.elem.width * window.devicePixelRatio * this.board.width);
+      const j = Math.floor(y / this.elem.height * window.devicePixelRatio * this.board.height);
       f(i, j);
     }
 
