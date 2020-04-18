@@ -1,5 +1,5 @@
-import { Util } from "./util";
-import { Board } from "./board";
+import { Util } from "../util";
+import { Board } from "../server/board";
 import { BoardCanvas } from "./canvas";
 
 (() => {

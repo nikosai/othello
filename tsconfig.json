@@ -9,6 +9,6 @@
     "moduleResolution": "node"
   },
   "include": [
-    "src/*.ts"
+    "src/*.ts", "src/server/server.ts", "src/server/board.ts", "src/server/player.ts", "src/client/canvas.ts", "src/client/main.ts"
   ]
 }

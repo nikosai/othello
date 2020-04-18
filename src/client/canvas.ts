@@ -1,5 +1,6 @@
-import { Board } from "./board";
-import { Util, Box, Vec2, State } from "./util";
+import { Board } from "../server/board";
+import { Util, Box, Vec2, State } from "../util";
+import M from "materialize-css";
 
 export class BoardCanvas{
   line_width: number = 0.005;

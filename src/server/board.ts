@@ -1,4 +1,4 @@
-import { Vec2, State, Util } from "./util";
+import { Vec2, State, Util } from "../util";
 
 // 盤面
 export class Board {
@@ -27,6 +27,19 @@ export class Board {
   // for debug
   print() {
     this.rawboard.print();
+  }
+  getCandidates(): {point:Vec2, flip:Vec2[]}[]{
+    let ret:{point:Vec2, flip:Vec2[]}[] = [];
+    for (let x = 0; x < this.width; x++){
+      for (let y = 0; y < this.height; y++){
+        let res = this.check(x, y);
+        if (res.length > 0) ret.push({
+          point: new Vec2(x, y),
+          flip: res
+        });
+      }
+    }
+    return ret;
   }
   check(x: number, y: number): Vec2[] {
     if (this.get(x, y) !== State.Empty) return [];
