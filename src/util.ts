@@ -17,6 +17,16 @@ export class Util{
       case State.Empty: return State.Empty;
     }
   }
+  static log(str: string) {
+    const now = new Date();
+    const pad = (n: number) => ("0" + n.toString(10)).slice(-2);
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+    const h = now.getHours();
+    const min = now.getMinutes();
+    const s = now.getSeconds();
+    console.log(`[${pad(m)}/${pad(d)} ${pad(h)}:${pad(min)}:${pad(s)}] ${str}`);
+  }
 }
 
 export class Box {
@@ -51,4 +61,14 @@ export enum State {
   Black, // 黒コマ
   White, // 白コマ
   Empty, // なし
+}
+
+export class Candidate{
+  point: Vec2;
+  flip: Vec2[];
+
+  constructor(point:Vec2, flip:Vec2[]) {
+    this.point = point;
+    this.flip = flip;
+  }
 }

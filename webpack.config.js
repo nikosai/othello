@@ -5,6 +5,7 @@ module.exports = {
     filename: 'main.js'
   },
   mode: 'development',
+  devtool: 'source-map',
   // mode: 'production',
   module: {
     rules: [
@@ -18,6 +19,6 @@ module.exports = {
   },
   // import 文で .ts ファイルを解決するため
   resolve: {
-    extensions: [".ts"]
+    extensions: [".ts", ".js", ".json", ".jsx", ".css"]
   }
 };
