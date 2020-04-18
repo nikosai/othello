@@ -49,6 +49,8 @@ export class BoardCanvas{
 
     document.getElementById("my-stones")!.innerText = this.game.board.count(this.game.myColor).toString();
     document.getElementById("enemy-stones")!.innerText = this.game.board.count(Util.reverse(this.game.myColor)).toString();
+    document.getElementById("my-name")!.className = this.game.isMyTurn() ? "turn" : "";
+    document.getElementById("enemy-name")!.className = this.game.isMyTurn() ? "" : "turn";
     
     let res: Vec2[] = [];
     if (this.game.isMyTurn() && this.mouse_at) {

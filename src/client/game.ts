@@ -44,7 +44,7 @@ export class Game {
         if (res.enemySkipped) {
           M.toast({ html: "相手はどこにも置けないのでパスしました" });
         }
-        M.toast({ html: "あなたの番です" })
+        // M.toast({ html: "あなたの番です" })
       };
       f();
     })

@@ -28,6 +28,7 @@ body {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
+  padding: 5px 0;
 }
 
 #message>*{
@@ -42,12 +43,21 @@ body {
   border: 2px solid black;
 }
 
+#my-name, #enemy-name{
+  border-radius: 0.4em;
+  padding:0.2em;
+}
+
 #message>.white{
   background: white;
 }
 
 #message>.black{
   background: black;
+}
+
+#message>.turn{
+  background: rgba(255, 0, 0, 0.3);
 }
 
 #wrapper{
