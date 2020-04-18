@@ -1,4 +1,4 @@
-import { Vec2, State, Util, Candidate } from "../util";
+import { Vec2, State, Util, Candidate } from "./util";
 
 // 盤面
 export class Board {

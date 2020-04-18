@@ -25,10 +25,11 @@ body {
 #wrapper{
   width: 90%;
   margin: 0 auto;
+  padding-top: 20px; 
 }
 
 #message{
-  margin-top:10px;
+  margin-top: 10px;
   text-align: center;
 }
 

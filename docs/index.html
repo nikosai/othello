@@ -8,13 +8,37 @@
 </head>
 <body>
   <div id="wrapper">
-    <h1>オセロやぞ</h1>
     <div id="canvas-outer">
       <div id="canvas-wrapper">
         <canvas id="canvas"></canvas>
       </div>
     </div>
     <p id="message"></p>
+  </div>
+  <div id="modal-init" class="modal">
+    <div class="modal-content">
+      <h4>オセロやぞ</h4>
+      <p>名前を入れるんじゃ</p>
+      <div class="input-field col s12">
+        <input id="modal-init-name" type="text" class="validate" placeholder="なまえ">
+        <!-- <label for="modal-init-name">なまえ</label> -->
+      </div>
+      <p>対戦相手を選ぶんじゃ</p>
+      <div id="modal-init-buttons">
+        <a class="waves-effect waves-green btn">AI</a>
+        <a class="waves-effect waves-green btn">Human</a>
+      </div>
+    </div>
+  </div>
+  <div id="modal-error" class="modal">
+    <div class="modal-content">
+      <h4>問題が発生しました</h4>
+      <p>リロードします。<br>エラー内容：</p>
+      <pre class="card-panel red darken-2 white-text"></pre>
+    </div>
+    <div class="modal-footer">
+      <a href="javascript:void(0)" class="modal-close waves-effect waves-green btn">Reload</a>
+    </div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>

@@ -1,6 +1,6 @@
-import { Board } from "../server/board";
+import { Board } from "../board";
 import { Util, Box, Vec2, State } from "../util";
-import M from "materialize-css";
+const FRAMERATE = 60;
 
 export class BoardCanvas{
   line_width: number = 0.005;
@@ -27,7 +27,18 @@ export class BoardCanvas{
     }
 
     document.addEventListener('click', listenerMaker((x,y)=>this.onClick(x,y)));
-    document.addEventListener('mousemove', listenerMaker((x,y)=>this.onMouseMove(x,y)));
+    document.addEventListener('mousemove', listenerMaker((x, y) => this.onMouseMove(x, y)));
+    
+    setInterval(() => {
+      const canvasWrapper = document.getElementById("canvas-wrapper")!;
+    
+      // resize
+      element.width = canvasWrapper.clientWidth * window.devicePixelRatio;
+      element.height = canvasWrapper.clientHeight * window.devicePixelRatio;
+    
+      // update
+      this.drawBoard();
+    }, 1000 / FRAMERATE);  
   }
 
   drawBoard() {
