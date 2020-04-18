@@ -16,5 +16,8 @@ export abstract class Player{
   }
   enemyDisconnected(): void {}
   skip(board: Board): void {};
-  end(board:Board):void {};
+  end(board: Board): void { };
+  isMyColor(s: State): boolean{
+    return this.color !== undefined && s === this.color;
+  }
 }

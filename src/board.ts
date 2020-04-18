@@ -64,6 +64,13 @@ export class Board {
     }
     return new Board(this.rawboard, Util.reverse(this.curState));
   }
+  isLeaf() {
+    const res = this.checkSkipped();
+    if (res) {
+      return res.checkSkipped() ? true : false;
+    }
+    return false;
+  }
   count(s: State) {
     let c = 0;
     for (let x = 0; x < this.width; x++){

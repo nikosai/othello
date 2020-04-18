@@ -6,6 +6,7 @@ import { WebUIPlayer } from "../player/webui";
 import { Player } from "../player";
 import { Board } from "../board";
 import { RandomAIPlayer } from "../player/random";
+import { SimpleAI } from "../player/simple";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -77,7 +78,8 @@ io.on("connection", (s) => {
     player = new WebUIPlayer(res.name, s)
     switch (res.enemy) {
       case "AI":
-        onMatch(player,new RandomAIPlayer());
+        // onMatch(player,new RandomAIPlayer());
+        onMatch(player, new SimpleAI(10));
         break;
       case "Human":
         const enemy = matchQueue.shift();
