@@ -3,3 +3,4 @@ node_modules/*
 docs/main.js
 
 .now
+docs/main.js.map
