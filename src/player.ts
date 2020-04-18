@@ -9,9 +9,12 @@ export abstract class Player{
     this.name = name;
   }
   abstract match(enemy: Player, board: Board, color:State): void;
-  abstract isConnected(): boolean;
-  abstract enemyDisconnected(): void;
-  abstract onMyTurn(board: Board, onPut: (x: number, y: number) => Board | null, enemySkipped?:boolean): void;
-  abstract skip(board: Board): void;
-  abstract end(board:Board):void;
+  abstract onMyTurn(board: Board, onPut: (x: number, y: number) => Board | null, enemySkipped?: boolean): void;
+  
+  isConnected(): boolean{
+    return true;
+  }
+  enemyDisconnected(): void {}
+  skip(board: Board): void {};
+  end(board:Board):void {};
 }

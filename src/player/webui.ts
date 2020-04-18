@@ -20,10 +20,10 @@ export class WebUIPlayer extends Player{
     return this.socket.connected;
   }
 
-  onMyTurn(board:Board,onPut:(x:number,y:number)=>Board|null,enemySkipped?:boolean) {
+  onMyTurn(board: Board, onPut: (x: number, y: number) => Board | null, enemySkipped?: boolean) {
     this.socket.emit("turn", { board: board.getBoard(), enemySkipped: enemySkipped ?? false });
     const listener = (res: { x: number, y: number }) => {
-      Util.log(`[put] x:${res.x}, y:${res.y}`);
+      Util.log(`[put] name:${this.name}, x:${res.x}, y:${res.y}`);
       let board = onPut(res.x, res.y);
       if (board) {
         this.socket.emit("putSuccess",{board:board.getBoard()})

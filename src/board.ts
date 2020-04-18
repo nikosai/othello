@@ -1,5 +1,8 @@
 import { Vec2, State, Util, Candidate, RawBoard } from "./util";
 
+const BOARD_WIDTH = 8;
+const BOARD_HEIGHT = 8;
+
 // 盤面
 export class Board {
   private readonly rawboard: RawBoard;
@@ -7,17 +10,22 @@ export class Board {
   readonly height: number;
   readonly curState: State; // 次の手番
 
-  constructor(w: number, h: number, rawboard?: RawBoard, curState?: State) {
-    this.width = w;
-    this.height = h;
+  constructor(rawboard?: RawBoard, curState?: State) {
+    if (rawboard) {
+      this.width = rawboard.length - 2;
+      this.height = rawboard[0].length - 2;
+    } else {
+      this.width = BOARD_WIDTH;
+      this.height = BOARD_HEIGHT;
+    }
     this.curState = curState ?? State.Black;
     if (rawboard) {
       this.rawboard = rawboard;
     } else {
       let board:RawBoard = [];
-      for (let i = 0; i < w + 2; i++) {
+      for (let i = 0; i < this.width + 2; i++) {
         board[i] = [];
-        for (let j = 0; j < h + 2; j++) {
+        for (let j = 0; j < this.height + 2; j++) {
           board[i][j] = State.Empty;
         }
       }
@@ -30,7 +38,12 @@ export class Board {
     this.rawboard[x + 1][y + 1] = s;
   } 
   get(x: number, y: number) {
-    return this.rawboard[x + 1][y + 1];
+    if (this.rawboard[x+1] !== undefined)
+      return this.rawboard[x + 1][y + 1];
+    else {
+      console.error("error");
+      return State.Empty;
+    }
   }
   getBoard(): RawBoard{
     const board:RawBoard = [];
@@ -49,7 +62,7 @@ export class Board {
         if (this.check(x, y).length > 0) return null;
       }
     }
-    return new Board(this.width, this.height, this.rawboard, Util.reverse(this.curState));
+    return new Board(this.rawboard, Util.reverse(this.curState));
   }
   count(s: State) {
     let c = 0;
@@ -72,28 +85,25 @@ export class Board {
       board[a.x+1][a.y+1] = this.curState;
     }
     board[x+1][y+1] = this.curState;
-    return new Board(this.width, this.height,
-      board,
-      Util.reverse(this.curState)
-    );
+    return new Board(board, Util.reverse(this.curState));
   }
   // for debug
   print() {
     let str = "";
-    for (let i = 0; i < this.rawboard.length; i++) {
-      const s = this.rawboard[i];
-      for (let j = 0; j < s.length; j++) {
-        // const f = (s: State) => {
-        //   switch (s) {
-        //     case State.Black: return "B";
-        //     case State.White: return "W";
-        //     case State.Empty: return " ";
-        //   }
-        // }
-        // str += f(s[j]);
-        str += s[j];
+    for (let y = 0; y < this.height; y++){
+      for (let x = 0; x < this.width; x++){
+        switch (this.get(x, y)) {
+          case State.Black:
+            str += "X";
+            break;
+          case State.White:
+            str += "O";
+            break;
+          case State.Empty:
+            str += " ";
+        }
       }
-      str += '\n';
+      if (y < this.height) str += "\n";
     }
     console.log(str);
   }

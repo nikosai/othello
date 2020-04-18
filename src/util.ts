@@ -27,6 +27,9 @@ export class Util{
     const s = now.getSeconds();
     console.log(`[${pad(m)}/${pad(d)} ${pad(h)}:${pad(min)}:${pad(s)}] ${str}`);
   }
+  static random<T>(arr:T[]):T {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 }
 
 export class Box {

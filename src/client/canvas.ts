@@ -1,6 +1,7 @@
 import { Board } from "../board";
 import { Util, Box, Vec2, State, RawBoard } from "../util";
 import M from "materialize-css";
+import { Game } from "./game";
 const FRAMERATE = 60;
 
 export class BoardCanvas{
@@ -8,26 +9,23 @@ export class BoardCanvas{
   square_size: Box;
   elem: HTMLCanvasElement;
   cxt: CanvasRenderingContext2D;
-  board: Board;
   mouse_at: Vec2 | null = null;
-  myColor: State;
-  socket: SocketIOClient.Socket;
-  constructor(element: HTMLCanvasElement,socket:SocketIOClient.Socket,board:Board,color:State) {
+  game: Game;
+  constructor(element: HTMLCanvasElement,game:Game) {
     this.elem = element;
+    this.elem.style.display = "inline-block";
+    this.game = game;
     this.cxt = Util.checkIsDefined(element.getContext('2d'));
-    this.board = board;
-    this.myColor = color;
-    this.socket = socket;
     this.square_size = new Box(
-      (1 - this.line_width * (this.board.width + 1)) / this.board.width,
-      (1 - this.line_width * (this.board.height + 1)) / this.board.height
+      (1 - this.line_width * (game.board.width + 1)) / game.board.width,
+      (1 - this.line_width * (game.board.height + 1)) / game.board.height
     );
     const listenerMaker = (f:(x:number,y:number)=>void) => (e:MouseEvent) => {
       const rect = this.elem.getBoundingClientRect();
       const x = e.clientX - Math.floor(rect.left);
       const y = e.clientY - Math.floor(rect.top);
-      const i = Math.floor(x / this.elem.width * window.devicePixelRatio * this.board.width);
-      const j = Math.floor(y / this.elem.height * window.devicePixelRatio * this.board.height);
+      const i = Math.floor(x / this.elem.width * window.devicePixelRatio * game.board.width);
+      const j = Math.floor(y / this.elem.height * window.devicePixelRatio * game.board.height);
       f(i, j);
     }
 
@@ -44,42 +42,6 @@ export class BoardCanvas{
       // update
       this.drawBoard();
     }, 1000 / FRAMERATE);
-    this.waitMyTurn();
-    this.waitSkip();
-    this.socket.once("gameEnd", (res:{board:RawBoard,stones:number,enemy:number}) => {
-      Util.log(`[gameEnd] ${res.board}`);
-      this.board = new Board(this.board.width, this.board.height, res.board, this.myColor);
-      const str = `試合終了！ ${res.stones}対${res.enemy}で`
-      if (res.stones > res.enemy) {
-        M.toast({html:str+`あなたの勝ちです！`})
-      } else if (res.stones < res.enemy) {
-        M.toast({html:str+`あなたの負けです……`})
-      } else {
-        M.toast({html:str+`引き分けです`})
-      }
-      this.socket.off("turn");
-      this.socket.off("putSuccess");
-      this.socket.off("putFail");
-    })
-  }
-
-  waitMyTurn() {
-    this.socket.once("turn", (res: { board: RawBoard, enemySkipped:boolean }) => {
-      Util.log(`[turn] ${res}`)
-      this.board = new Board(this.board.width, this.board.height, res.board, this.myColor);
-      if (res.enemySkipped){
-        M.toast({ html: "相手はどこにも置けないのでパスしました" });
-      }
-      M.toast({html:"あなたの番です"})
-    })
-  }
-
-  waitSkip() {
-    this.socket.once("skip", (res: { board: RawBoard }) => {
-      Util.log(`[skip] ${res}`);
-      this.board = new Board(this.board.width, this.board.height, res.board, Util.reverse(this.myColor));
-      M.toast({ html: "どこにも置けないのでパスしました" });
-    })
   }
 
   drawBoard() {
@@ -87,14 +49,14 @@ export class BoardCanvas{
     const grayOverlay = 'rgba(0,0,0,0.2)';
     
     let res: Vec2[] = [];
-    if (this.myColor === this.board.curState && this.mouse_at) {
-      res = this.board.check(this.mouse_at.x, this.mouse_at.y);
+    if (this.game.isMyTurn() && this.mouse_at) {
+      res = this.game.board.check(this.mouse_at.x, this.mouse_at.y);
     }
 
-    for (let y = 0; y < this.board.height; y++) {
-      for (let x = 0; x < this.board.width; x++) {
+    for (let y = 0; y < this.game.board.height; y++) {
+      for (let x = 0; x < this.game.board.width; x++) {
         this.fillSquare('green', x, y);
-        const st = this.board.get(x, y);
+        const st = this.game.board.get(x, y);
         if (st !== State.Empty) {
           this.drawStone(
             (st === State.Black ? 'black' : 'white'),
@@ -106,9 +68,9 @@ export class BoardCanvas{
 
         if (this.mouse_at) {
           if (this.mouse_at.equals(x, y)) {
-            if (this.board.get(x, y) === State.Empty) {
+            if (this.game.board.get(x, y) === State.Empty) {
               this.drawStone(
-                (this.myColor === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
+                (this.game.myColor === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
                 'rgba(0,0,0,0.3)',
                 0.003,
                 0.65,
@@ -134,32 +96,23 @@ export class BoardCanvas{
       fillStyle,
       strokeStyle,
       lineWidth * (this.elem.height + this.elem.width) / 2,
-      (2*x+1)/(2*this.board.width),
-      (2*y+1)/(2*this.board.height),
+      (2*x+1)/(2*this.game.board.width),
+      (2*y+1)/(2*this.game.board.height),
       this.square_size.width * scale,
       this.square_size.height * scale
     );
   }
 
   onClick(x: number, y: number) {
-    if (x >= 0 && x < this.board.width && y >= 0 && y < this.board.height && this.myColor === this.board.curState) {
-      this.socket.emit("put", { x: x, y: y });
-      this.socket.off("putSuccess");
-      this.socket.off("putFail");
-      this.socket.once("putSuccess", (res: { board: RawBoard }) => {
-        Util.log(`[putSuccess] ${res}`)
-        this.board = new Board(this.board.width, this.board.height, res.board, Util.reverse(this.myColor));
-        this.waitMyTurn();
-      })
-      this.socket.once("putFail", () => {
-        Util.log(`[putFail]`)
-        M.toast({ html: "そこには置けません", classes: "red darken-2" });
-      })
+    if (x >= 0 && x < this.game.board.width
+      && y >= 0 && y < this.game.board.height
+      && this.game.myColor === this.game.board.curState) {
+      this.game.emit("put", { x: x, y: y });
     }
   }
 
   onMouseMove(x: number, y: number) {
-    if (x < 0 || x >= this.board.width || y < 0 || y >= this.board.height) {
+    if (x < 0 || x >= this.game.board.width || y < 0 || y >= this.game.board.height) {
       this.mouse_at = null;
     } else {
       this.mouse_at = new Vec2(x, y);

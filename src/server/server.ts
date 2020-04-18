@@ -5,6 +5,7 @@ import { Util, State } from "../util";
 import { WebUIPlayer } from "../player/webui";
 import { Player } from "../player";
 import { Board } from "../board";
+import { RandomAIPlayer } from "../player/random";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -15,13 +16,10 @@ app.use(express.static("docs"));
 
 app.set("port", PORT);
 
-const BOARD_WIDTH = 8;
-const BOARD_HEIGHT = 8;
-
 let matchQueue:Player[] = [];
 
 function onMatch(p1: Player, p2: Player) {
-  let board = new Board(BOARD_WIDTH, BOARD_HEIGHT);
+  let board = new Board();
   let black:Player, white:Player;
   if (Math.floor(Math.random() * 2) === 0) {
     black = p1;
@@ -79,7 +77,7 @@ io.on("connection", (s) => {
     player = new WebUIPlayer(res.name, s)
     switch (res.enemy) {
       case "AI":
-        // player.match(new AIPlayer());
+        onMatch(player,new RandomAIPlayer());
         break;
       case "Human":
         const enemy = matchQueue.shift();

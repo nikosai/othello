@@ -2,56 +2,92 @@ import { RawBoard, State, Util } from "../util";
 import { Board } from "../board";
 import { BoardCanvas } from "./canvas";
 import M from "materialize-css";
-import { DOMControl } from "./dom";
 
-const BOARD_WIDTH = 8;
-const BOARD_HEIGHT = 8;
 const canvas = <HTMLCanvasElement>document.getElementById("canvas")!;
 canvas.style.display = "none";
 
-export class Game{
-  constructor(socket:SocketIOClient.Socket) {
-    const modal = document.getElementById("modal-init")!;
-    const modal_buttons = document.getElementById("modal-init-buttons")!;
-    modal_buttons.textContent = null;
+export class Game {
+  myColor: State;
+  board: Board;
+  private socket: SocketIOClient.Socket;
+  eventSet: Set<string>;
+  canvas: BoardCanvas;
+  waitingTurn: boolean;
+  constructor(socket: SocketIOClient.Socket, myColor: State, board: RawBoard) {
+    this.board = new Board(board);
+    this.canvas = new BoardCanvas(canvas, this);
+    this.socket = socket;
+    this.myColor = myColor;
+    this.eventSet = new Set();
+    this.waitingTurn = true;
 
-    const players = ["AI", "Human"];
-
-    const m = M.Modal.init(modal, {
-      dismissible: false
-    });
-
-    for (const p of players) {
-      const a = document.createElement("a");
-      a.classList.add("waves-effect", "waves-green", "btn");
-      a.href = "javascript:void(0);";
-      a.innerText = p;
-      a.style.marginLeft = "5px";
-      a.addEventListener("click", () => {
-        const name = (<HTMLInputElement>document.getElementById("modal-init-name")).value;
-        if (name === "") {
-          M.toast({ html: "名前を入力せい", classes: "red darken-4" });
-          return;
-        }
-        socket.emit("match", { name: name, enemy: p });
-        m.close();
-        M.toast({ html: "Matching ..." });
-      });
-      modal_buttons.appendChild(a);
-    }
-  
-    socket.once("matched", (res: { name: string, board: RawBoard, color: State }) => {
-      Util.log(`[matched] ${res}`)
-      M.toast({ html: `${res.name}さんと対戦開始！ あなたは${res.color === State.Black ? "黒" : "白"}番です` });
-      const board = new Board(BOARD_WIDTH, BOARD_HEIGHT, res.board);
-      new BoardCanvas(canvas, socket, board, res.color);
-      canvas.style.display = "inline-block";
-      socket.once("enemyDisconnected", () => {
-        Util.log(`[enemyDisconnected]`);
-        DOMControl.onError(`対戦相手（${res.name}さん）との通信が切断されました`);
-      })
+    this.on("gameEnd", (res: { board: RawBoard, stones: number, enemy: number }) => {
+      Util.log(`[gameEnd] ${res.board}`);
+      this.board = new Board(res.board, this.myColor);
+      const str = `試合終了！ ${res.stones}対${res.enemy}で`
+      if (res.stones > res.enemy) {
+        M.toast({ html: str + `あなたの勝ちです！` })
+      } else if (res.stones < res.enemy) {
+        M.toast({ html: str + `あなたの負けです……` })
+      } else {
+        M.toast({ html: str + `引き分けです` })
+      }
+      this.finalize();
     })
 
-    m.open();
+    this.on("turn", (res: { board: RawBoard, enemySkipped: boolean }) => {
+      const f = () => {
+        if (!this.waitingTurn) setTimeout(f, 100);
+        Util.log(`[turn] ${res}`)
+        this.waitingTurn = false;
+        this.board = new Board(res.board, this.myColor);
+        if (res.enemySkipped) {
+          M.toast({ html: "相手はどこにも置けないのでパスしました" });
+        }
+        M.toast({ html: "あなたの番です" })
+      };
+      f();
+    })
+    this.on("skip", (res: { board: RawBoard }) => {
+      Util.log(`[skip] ${res}`);
+      if (!this.myColor) {
+        console.error("Error: this.myColor is undefined.");
+        return;
+      }
+      this.board = new Board(res.board, Util.reverse(this.myColor));
+      M.toast({ html: "どこにも置けないのでパスしました" });
+    })
+    this.on("putSuccess", (res: { board: RawBoard }) => {
+      Util.log(`[putSuccess] ${res}`)
+      this.board = new Board(res.board, Util.reverse(this.myColor));
+      this.waitingTurn = true;
+    })
+    this.on("putFail", () => {
+      Util.log(`[putFail]`)
+      M.toast({ html: "そこには置けません", classes: "red darken-2" });
+    })
+  }
+
+  isMyTurn() {
+    return this.myColor === this.board.curState;
+  }
+
+  on(event: string, fn: Function) {
+    if (this.eventSet.has(event)) {
+      console.error(`Warning: the handler of event ${event} is already defined`);
+    }
+    this.eventSet.add(event);
+    this.socket.on(event, fn);
+  }
+
+  emit(event: string, ...args: any[]) {
+    Util.log(`[${event}] ${args}`);
+    this.socket.emit(event, ...args);
+  }
+
+  finalize() {
+    this.eventSet.forEach((v) => {
+      this.socket.off(v);
+    })
   }
 }
