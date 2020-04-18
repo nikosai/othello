@@ -7,8 +7,5 @@
     "strict": true,                           /* Enable all strict type-checking options. */
     "esModuleInterop": true,                   /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
     "moduleResolution": "node"
-  },
-  "include": [
-    "src/*.ts", "src/server/server.ts", "src/server/board.ts", "src/server/player.ts", "src/client/canvas.ts", "src/client/main.ts"
-  ]
+  }
 }
