@@ -46,6 +46,9 @@ export class BoardCanvas{
   drawBoard() {
     const redOverlay = 'rgba(255,0,0,0.3)';
     const grayOverlay = 'rgba(0,0,0,0.2)';
+
+    document.getElementById("my-stones")!.innerText = this.game.board.count(this.game.myColor).toString();
+    document.getElementById("enemy-stones")!.innerText = this.game.board.count(Util.reverse(this.game.myColor)).toString();
     
     let res: Vec2[] = [];
     if (this.game.isMyTurn() && this.mouse_at) {

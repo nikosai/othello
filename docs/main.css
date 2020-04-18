@@ -22,16 +22,38 @@ body {
   background-color: rgba(255,255,255,0.5);
 }
 
+#message {
+  margin: 0;
+  display:flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+#message>*{
+  margin: 0 5px;
+}
+
+#message>.stone{
+  width: 0.8em;
+  height: 0.8em;
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid black;
+}
+
+#message>.white{
+  background: white;
+}
+
+#message>.black{
+  background: black;
+}
+
 #wrapper{
   width: 90%;
   margin: 0 auto;
-  padding-top: 20px;
   display: none;
-}
-
-#message{
-  margin-top: 10px;
-  text-align: center;
 }
 
 #canvas-outer{
