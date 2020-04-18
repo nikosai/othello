@@ -1,4 +1,6 @@
 import { Player } from "../player";
+import { Board } from "../board";
+import { State, Util } from "../util";
 
 // WebUIのサーバ側
 export class WebUIPlayer extends Player{
@@ -8,9 +10,43 @@ export class WebUIPlayer extends Player{
     this.socket = s;
   }
 
-  match(enemy: Player, preventEcho = false) {
-    if (!preventEcho) enemy.match(this, true);
-    this.socket.emit("matched", {name:enemy.name});
+  match(enemy: Player, board: Board, color:State) {
+    this.enemy = enemy;
+    this.color = color;
+    this.socket.emit("matched", { name: enemy.name, board: board.getBoard(), color: color });
+  }
+
+  isConnected() {
+    return this.socket.connected;
+  }
+
+  onMyTurn(board:Board,onPut:(x:number,y:number)=>Board|null) {
+    this.socket.emit("turn", { board: board.getBoard() });
+    const listener = (res: { x: number, y: number }) => {
+      Util.log(`[put] x:${res.x}, y:${res.y}`);
+      let board = onPut(res.x, res.y);
+      if (board) {
+        this.socket.emit("putSuccess",{board:board.getBoard()})
+      } else {
+        this.socket.emit("putFail");
+        this.socket.once("put", listener);
+      }
+    }
+    this.socket.once("put", listener);
+  }
+
+  enemyDisconnected() {
+    this.socket.emit("enemyDisconnected");
+  }
+
+  end(board: Board) {
+    if (this.color === undefined) {
+      console.error("Error: this.color is undefined");
+      return;
+    }
+    this.socket.emit("gameEnd", {
+      board: board.getBoard(), stones: board.count(this.color), enemy: board.count(Util.reverse(this.color))
+    });
   }
 } 
 

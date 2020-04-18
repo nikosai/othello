@@ -7,8 +7,8 @@
     "start": "ts-node .",
     "build": "webpack",
     "watch": "npm-run-all --parallel watch:*",
-    "watch:webpack": "webpack -w",
-    "watch:tsnode": "ts-node-dev --respawn .",
+    "watch:webpack": "webpack -w --display-modules",
+    "watch:tsnode": "ts-node-dev --respawn --exit-child .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "nikosai",

@@ -63,6 +63,8 @@ export enum State {
   Empty, // なし
 }
 
+export type RawBoard = State[][];
+
 export class Candidate{
   point: Vec2;
   flip: Vec2[];

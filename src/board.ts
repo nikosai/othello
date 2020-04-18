@@ -1,8 +1,8 @@
-import { Vec2, State, Util, Candidate } from "./util";
+import { Vec2, State, Util, Candidate, RawBoard } from "./util";
 
 // 盤面
 export class Board {
-  readonly rawboard: RawBoard;
+  private readonly rawboard: RawBoard;
   readonly width: number;
   readonly height: number;
   readonly curState: State; // 次の手番
@@ -10,20 +10,94 @@ export class Board {
   constructor(w: number, h: number, rawboard?: RawBoard, curState?: State) {
     this.width = w;
     this.height = h;
-    this.rawboard = rawboard ?? RawBoard.init(w, h);
     this.curState = curState ?? State.Black;
+    if (rawboard) {
+      this.rawboard = rawboard;
+    } else {
+      let board:RawBoard = [];
+      for (let i = 0; i < w + 2; i++) {
+        board[i] = [];
+        for (let j = 0; j < h + 2; j++) {
+          board[i][j] = State.Empty;
+        }
+      }
+      board[4][4] = board[5][5] = State.White;
+      board[4][5] = board[5][4] = State.Black;
+      this.rawboard = board;
+    }
   }
-  put(x: number, y: number):Board|null {
-    const res = this.check(x, y);
-    if (res.length === 0) return null;
+  private set(x: number, y: number, s: State) {
+    this.rawboard[x + 1][y + 1] = s;
+  } 
+  get(x: number, y: number) {
+    return this.rawboard[x + 1][y + 1];
+  }
+  getBoard(): RawBoard{
+    const board:RawBoard = [];
+    for (let i = 0; i < this.width + 2; i++) {
+      board[i] = [];
+      for (let j = 0; j < this.height + 2; j++) {
+        board[i][j] = this.rawboard[i][j];
+      }
+    }
+    return board;
+  }
+  // どこにも置けない状態か
+  checkSkipped():Board|null {
+    for (let x = 0; x < this.width; x++){
+      for (let y = 0; y < this.height; y++){
+        if (this.check(x, y).length > 0) return null;
+      }
+    }
+    return new Board(this.width, this.height, this.rawboard, Util.reverse(this.curState));
+  }
+  count(s: State) {
+    let c = 0;
+    for (let x = 0; x < this.width; x++){
+      for (let y = 0; y < this.height; y++){
+        if (this.get(x, y) === s) c++;
+      }
+    }
+    return c;
+  }
+  put(x: number, y: number, arr?: Vec2[]) {
+    const board = this.getBoard();
+    if (!arr) {
+      arr = this.check(x, y);
+    }
+    if (arr.length === 0) {
+      return null
+    }
+    for (let a of arr) {
+      board[a.x+1][a.y+1] = this.curState;
+    }
+    board[x+1][y+1] = this.curState;
     return new Board(this.width, this.height,
-      this.rawboard.put(x, y, res, this.curState),
+      board,
       Util.reverse(this.curState)
     );
   }
-  get(x: number, y: number) {
-    return this.rawboard.get(x, y);
+  // for debug
+  print() {
+    let str = "";
+    for (let i = 0; i < this.rawboard.length; i++) {
+      const s = this.rawboard[i];
+      for (let j = 0; j < s.length; j++) {
+        // const f = (s: State) => {
+        //   switch (s) {
+        //     case State.Black: return "B";
+        //     case State.White: return "W";
+        //     case State.Empty: return " ";
+        //   }
+        // }
+        // str += f(s[j]);
+        str += s[j];
+      }
+      str += '\n';
+    }
+    console.log(str);
   }
+
   // // for debug
   // print() {
   //   this.rawboard.print();
@@ -61,74 +135,5 @@ export class Board {
     if (ret === null) return null;
     ret.push(new Vec2(x1, y1));
     return ret;
-  }
-}
-
-class RawBoard {
-  readonly width: number;
-  readonly height: number;
-  private sqs: State[][]; // 本来の幅・高さより2広い
-  private constructor(w: number, h: number, sqs?:State[][]) {
-    this.width = w;
-    this.height = h;
-    this.sqs = [];
-    for (let i = 0; i < w + 2; i++) {
-      this.sqs[i] = [];
-      for (let j = 0; j < h + 2; j++) {
-        this.sqs[i][j] = (sqs ? sqs[i][j] : State.Empty);
-      }
-    }
-  }
-  private set(x: number, y: number, s: State) {
-    this.sqs[x + 1][y + 1] = s;
-  }
-  get(x: number, y: number) {
-    return this.sqs[x + 1][y + 1];
-  }
-  static init(w: number, h: number) {
-    let board = new RawBoard(w, h);
-    board.set(3, 3, State.White);
-    board.set(4, 4, State.White);
-    board.set(3, 4, State.Black);
-    board.set(4, 3, State.Black);
-    return board;
-  }
-  copy() {
-    return new RawBoard(this.width, this.height, this.sqs);
-  }
-  private flip(x: number, y: number) {
-    this.set(x, y, Util.reverse(this.get(x, y)));
-  }
-  private flipMulti(arr: Vec2[]):RawBoard {
-    let board = this.copy();
-    for (let a of arr) {
-      board.flip(a.x, a.y);
-    }
-    return board;
-  }
-  put(x:number, y:number, res: Vec2[], state:State) {
-    let board = this.flipMulti(res);
-    board.set(x, y, state);
-    return board;
-  }
-  // for debug
-  print() {
-    let str = "";
-    for (let i = 0; i < this.sqs.length; i++) {
-      const s = this.sqs[i];
-      for (let j = 0; j < s.length; j++) {
-        // const f = (s: State) => {
-        //   switch (s) {
-        //     case State.Black: return "B";
-        //     case State.White: return "W";
-        //     case State.Empty: return " ";
-        //   }
-        // }
-        // str += f(s[j]);
-        str += s[j];
-      }
-      str += '\n';
-    }
-    console.log(str);
   }
 }

@@ -1,5 +1,6 @@
 import { Board } from "../board";
-import { Util, Box, Vec2, State } from "../util";
+import { Util, Box, Vec2, State, RawBoard } from "../util";
+import M from "materialize-css";
 const FRAMERATE = 60;
 
 export class BoardCanvas{
@@ -8,11 +9,15 @@ export class BoardCanvas{
   elem: HTMLCanvasElement;
   cxt: CanvasRenderingContext2D;
   board: Board;
-  mouse_at: Vec2|null = null;
-  constructor(element: HTMLCanvasElement,board:Board) {
+  mouse_at: Vec2 | null = null;
+  myColor: State;
+  socket: SocketIOClient.Socket;
+  constructor(element: HTMLCanvasElement,socket:SocketIOClient.Socket,board:Board,color:State) {
     this.elem = element;
     this.cxt = Util.checkIsDefined(element.getContext('2d'));
     this.board = board;
+    this.myColor = color;
+    this.socket = socket;
     this.square_size = new Box(
       (1 - this.line_width * (this.board.width + 1)) / this.board.width,
       (1 - this.line_width * (this.board.height + 1)) / this.board.height
@@ -38,7 +43,31 @@ export class BoardCanvas{
     
       // update
       this.drawBoard();
-    }, 1000 / FRAMERATE);  
+    }, 1000 / FRAMERATE);
+    this.waitMyTurn();
+    this.socket.once("gameEnd", (res:{board:RawBoard,stones:number,enemy:number}) => {
+      Util.log(`[gameEnd] ${res.board}`);
+      this.board = new Board(this.board.width, this.board.height, res.board, this.myColor);
+      const str = `試合終了！ ${res.stones}対${res.enemy}で`
+      if (res.stones > res.enemy) {
+        M.toast({html:str+`あなたの勝ちです！`})
+      } else if (res.stones < res.enemy) {
+        M.toast({html:str+`あなたの負けです……`})
+      } else {
+        M.toast({html:str+`引き分けです`})
+      }
+      this.socket.off("turn");
+      this.socket.off("putSuccess");
+      this.socket.off("putFail");
+    })
+  }
+
+  waitMyTurn() {
+    this.socket.once("turn", (res: { board: RawBoard }) => {
+      Util.log(`[turn] ${res}`)
+      this.board = new Board(this.board.width, this.board.height, res.board, this.myColor);
+      M.toast({html:"あなたの番です"})
+    })
   }
 
   drawBoard() {
@@ -46,7 +75,7 @@ export class BoardCanvas{
     const grayOverlay = 'rgba(0,0,0,0.2)';
     
     let res: Vec2[] = [];
-    if (this.mouse_at) {
+    if (this.myColor === this.board.curState && this.mouse_at) {
       res = this.board.check(this.mouse_at.x, this.mouse_at.y);
     }
 
@@ -67,7 +96,7 @@ export class BoardCanvas{
           if (this.mouse_at.equals(x, y)) {
             if (this.board.get(x, y) === State.Empty) {
               this.drawStone(
-                (this.board.curState === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
+                (this.myColor === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
                 'rgba(0,0,0,0.3)',
                 0.003,
                 0.65,
@@ -101,9 +130,17 @@ export class BoardCanvas{
   }
 
   onClick(x: number, y: number) {
-    if (x >= 0 && x < this.board.width && y >= 0 && y < this.board.height) {
-      const board = this.board.put(x, y);
-      if (board) this.board = board;
+    if (x >= 0 && x < this.board.width && y >= 0 && y < this.board.height && this.myColor === this.board.curState) {
+      this.socket.emit("put", { x: x, y: y });
+      this.socket.once("putSuccess", (res: { board: RawBoard }) => {
+        Util.log(`[putSuccess] ${res}`)
+        this.board = new Board(this.board.width, this.board.height, res.board, Util.reverse(this.myColor));
+        this.waitMyTurn();
+      })
+      this.socket.once("putFail", () => {
+        Util.log(`[putFail]`)
+        M.toast({ html: "そこには置けません", classes: "red darken-2" });
+      })
     }
   }
 

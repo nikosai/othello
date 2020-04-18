@@ -1,39 +1,16 @@
-import M from "materialize-css";
-import io from "socket.io-client";
-import { Util } from "../util";
+import { RawBoard, State, Util } from "../util";
 import { Board } from "../board";
 import { BoardCanvas } from "./canvas";
+import M from "materialize-css";
+import { DOMControl } from "./dom";
 
-const socket = io.connect();
 const BOARD_WIDTH = 8;
 const BOARD_HEIGHT = 8;
 const canvas = <HTMLCanvasElement>document.getElementById("canvas")!;
-
-socket.on("connect", () => {
-  console.log("connected.")
-})
-
-socket.on("disconnect", () => {
-  const modal = document.getElementById("modal-error")!;
-  const pre = modal.querySelector(".modal-content")?.querySelector("pre")!;
-  pre.innerText = "通信が切断されました";
-  M.Modal.init(modal, {
-    dismissible: false,
-    onCloseStart: () => {
-      location.reload();
-    }
-  }).open();
-})
-
-function checkOpenModals() {
-  for (const m of ["modal-init","modal-error"]){
-    if (M.Modal.getInstance(document.getElementById(m)!).isOpen) return true;
-  }
-  return false;
-}
+canvas.style.display = "none";
 
 export class Game{
-  constructor() {
+  constructor(socket:SocketIOClient.Socket) {
     const modal = document.getElementById("modal-init")!;
     const modal_buttons = document.getElementById("modal-init-buttons")!;
     modal_buttons.textContent = null;
@@ -58,17 +35,23 @@ export class Game{
         }
         socket.emit("match", { name: name, enemy: p });
         m.close();
+        M.toast({ html: "Matching ..." });
       });
       modal_buttons.appendChild(a);
     }
   
-    m.open();
-
-    let board = new Board(BOARD_WIDTH, BOARD_HEIGHT);
-    let boardCanvas = new BoardCanvas(canvas, board);
-    
-    socket.on("matched", (res:{name:string}) => {
-      console.log(res.name);
+    socket.once("matched", (res: { name: string, board: RawBoard, color: State }) => {
+      Util.log(`[matched] ${res}`)
+      M.toast({ html: `${res.name}さんと対戦開始！ あなたは${res.color === State.Black ? "黒" : "白"}番です` });
+      const board = new Board(BOARD_WIDTH, BOARD_HEIGHT, res.board);
+      new BoardCanvas(canvas, socket, board, res.color);
+      canvas.style.display = "inline-block";
+      socket.once("enemyDisconnected", () => {
+        Util.log(`[enemyDisconnected]`);
+        DOMControl.onError(`対戦相手（${res.name}さん）との通信が切断されました`);
+      })
     })
+
+    m.open();
   }
 }
