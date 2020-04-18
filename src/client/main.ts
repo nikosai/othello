@@ -7,6 +7,7 @@ const socket = io.connect();
 
 let game: Game | undefined;
 function initGame() {
+  document.getElementById("wrapper")!.style.display = "none";
   socket.once("matched", (res: { name: string, board: RawBoard, color: State }) => {
     Util.log(`[matched] ${res.board}`)
     M.toast({ html: `${res.name}さんと対戦開始！ あなたは${res.color === State.Black ? "黒" : "白"}番です` });

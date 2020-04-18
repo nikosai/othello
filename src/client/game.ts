@@ -4,7 +4,6 @@ import { BoardCanvas } from "./canvas";
 import M from "materialize-css";
 
 const canvas = <HTMLCanvasElement>document.getElementById("canvas")!;
-canvas.style.display = "none";
 
 export class Game {
   myColor: State;
@@ -14,6 +13,7 @@ export class Game {
   canvas: BoardCanvas;
   waitingTurn: boolean;
   constructor(socket: SocketIOClient.Socket, myColor: State, board: RawBoard) {
+    document.getElementById("wrapper")!.style.display = "block";
     this.board = new Board(board);
     this.canvas = new BoardCanvas(canvas, this);
     this.socket = socket;

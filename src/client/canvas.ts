@@ -13,7 +13,6 @@ export class BoardCanvas{
   game: Game;
   constructor(element: HTMLCanvasElement,game:Game) {
     this.elem = element;
-    this.elem.style.display = "inline-block";
     this.game = game;
     this.cxt = Util.checkIsDefined(element.getContext('2d'));
     this.square_size = new Box(

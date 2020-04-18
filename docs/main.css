@@ -25,18 +25,12 @@ body {
 #wrapper{
   width: 90%;
   margin: 0 auto;
-  padding-top: 20px; 
+  padding-top: 20px;
+  display: none;
 }
 
 #message{
   margin-top: 10px;
-  text-align: center;
-}
-
-h1 {
-  margin:0;
-  padding: 5px;
-  font-size: 200%;
   text-align: center;
 }
 
