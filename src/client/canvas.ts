@@ -45,6 +45,7 @@ export class BoardCanvas{
       this.drawBoard();
     }, 1000 / FRAMERATE);
     this.waitMyTurn();
+    this.waitSkip();
     this.socket.once("gameEnd", (res:{board:RawBoard,stones:number,enemy:number}) => {
       Util.log(`[gameEnd] ${res.board}`);
       this.board = new Board(this.board.width, this.board.height, res.board, this.myColor);
@@ -63,10 +64,21 @@ export class BoardCanvas{
   }
 
   waitMyTurn() {
-    this.socket.once("turn", (res: { board: RawBoard }) => {
+    this.socket.once("turn", (res: { board: RawBoard, enemySkipped:boolean }) => {
       Util.log(`[turn] ${res}`)
       this.board = new Board(this.board.width, this.board.height, res.board, this.myColor);
+      if (res.enemySkipped){
+        M.toast({ html: "相手はどこにも置けないのでパスしました" });
+      }
       M.toast({html:"あなたの番です"})
+    })
+  }
+
+  waitSkip() {
+    this.socket.once("skip", (res: { board: RawBoard }) => {
+      Util.log(`[skip] ${res}`);
+      this.board = new Board(this.board.width, this.board.height, res.board, Util.reverse(this.myColor));
+      M.toast({ html: "どこにも置けないのでパスしました" });
     })
   }
 
@@ -132,6 +144,8 @@ export class BoardCanvas{
   onClick(x: number, y: number) {
     if (x >= 0 && x < this.board.width && y >= 0 && y < this.board.height && this.myColor === this.board.curState) {
       this.socket.emit("put", { x: x, y: y });
+      this.socket.off("putSuccess");
+      this.socket.off("putFail");
       this.socket.once("putSuccess", (res: { board: RawBoard }) => {
         Util.log(`[putSuccess] ${res}`)
         this.board = new Board(this.board.width, this.board.height, res.board, Util.reverse(this.myColor));

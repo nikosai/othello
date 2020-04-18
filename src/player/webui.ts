@@ -20,8 +20,8 @@ export class WebUIPlayer extends Player{
     return this.socket.connected;
   }
 
-  onMyTurn(board:Board,onPut:(x:number,y:number)=>Board|null) {
-    this.socket.emit("turn", { board: board.getBoard() });
+  onMyTurn(board:Board,onPut:(x:number,y:number)=>Board|null,enemySkipped?:boolean) {
+    this.socket.emit("turn", { board: board.getBoard(), enemySkipped: enemySkipped ?? false });
     const listener = (res: { x: number, y: number }) => {
       Util.log(`[put] x:${res.x}, y:${res.y}`);
       let board = onPut(res.x, res.y);
@@ -37,6 +37,10 @@ export class WebUIPlayer extends Player{
 
   enemyDisconnected() {
     this.socket.emit("enemyDisconnected");
+  }
+
+  skip(board: Board) {
+    this.socket.emit("skip", { board: board.getBoard() });
   }
 
   end(board: Board) {

@@ -11,6 +11,7 @@ export abstract class Player{
   abstract match(enemy: Player, board: Board, color:State): void;
   abstract isConnected(): boolean;
   abstract enemyDisconnected(): void;
-  abstract onMyTurn(board: Board, onPut: (x: number, y: number) => Board | null): void;
+  abstract onMyTurn(board: Board, onPut: (x: number, y: number) => Board | null, enemySkipped?:boolean): void;
+  abstract skip(board: Board): void;
   abstract end(board:Board):void;
 }

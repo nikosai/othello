@@ -46,7 +46,7 @@ function onMatch(p1: Player, p2: Player) {
           player.end(board);
           enemy.end(board);
         } else {
-          player.onMyTurn(board,playerOnPut);
+          player.onMyTurn(board,playerOnPut,true);
         }
       } else {
         enemy.onMyTurn(board, enemyOnPut);
