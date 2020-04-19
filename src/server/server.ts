@@ -7,6 +7,7 @@ import { Player } from "../player";
 import { Board } from "../board";
 import { RandomAIPlayer } from "../player/random";
 import { SimpleAI } from "../player/simple";
+import { WeightingAI } from "../player/weighting";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -87,7 +88,8 @@ io.on("connection", (s) => {
     switch (res.enemy) {
       case "AI":
         // onMatch(player,new RandomAIPlayer());
-        new Match(player, new SimpleAI(10));
+        // new Match(player, new SimpleAI(10));
+        new Match(player, new WeightingAI(6));
         break;
       case "Human":
         const enemy = matchQueue.shift();
