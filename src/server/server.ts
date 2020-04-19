@@ -17,11 +17,11 @@ app.use(express.static("docs"));
 
 app.set("port", PORT);
 
-let matchQueue:Player[] = [];
+let matchQueue: Player[] = [];
 
 function onMatch(p1: Player, p2: Player) {
   let board = new Board();
-  let black:Player, white:Player;
+  let black: Player, white: Player;
   if (Math.floor(Math.random() * 2) === 0) {
     black = p1;
     white = p2;
@@ -34,9 +34,10 @@ function onMatch(p1: Player, p2: Player) {
   black.match(white, board, State.Black);
   white.match(black, board, State.White);
 
-  const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Board | null, enemyOnPut: (x: number, y: number) => Board | null) => (x: number, y: number) => {
+  const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Promise<Board | null>, enemyOnPut: (x: number, y: number) => Promise<Board | null>) => async (x: number, y: number) => {
     const newboard = board.put(x, y);
     if (newboard) {
+      Util.log(`[put] name:${player.name}, x:${x}, y:${y}`);
       board = newboard;
       const res = board.checkSkipped();
       if (res) {
@@ -44,35 +45,37 @@ function onMatch(p1: Player, p2: Player) {
         if (res.checkSkipped()) {
           player.end(board);
           enemy.end(board);
+          return board;
         } else {
-          player.onMyTurn(board,playerOnPut,true);
+          player.onMyTurn(board, playerOnPut, true);
+          return board;
         }
       } else {
         enemy.onMyTurn(board, enemyOnPut);
+        return board;
       }
-      return newboard;
     } else {
       return null;
     }
   };
 
   const onPuts = {
-    black: (x: number, y: number) => {
-      return onPutMaker(black, white, onPuts.black, onPuts.white)(x,y);
+    black: async (x: number, y: number) => {
+      return onPutMaker(black, white, onPuts.black, onPuts.white)(x, y);
     },
-    white: (x: number, y: number) => {
-      return onPutMaker(white, black, onPuts.white, onPuts.black)(x,y);
+    white: async (x: number, y: number) => {
+      return onPutMaker(white, black, onPuts.white, onPuts.black)(x, y);
     }
   }
-  
+
   black.onMyTurn(board, onPuts.black);;
 }
 
 io.on("connection", (s) => {
   const addr = s.handshake.address;
   Util.log(`[connection] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
-  
-  let player: Player|undefined;
+
+  let player: Player | undefined;
   s.on("match", (res: { name: string, enemy: string }) => {
     Util.log(`[match] from: ${res.name}`);
     player = new WebUIPlayer(res.name, s)
@@ -83,7 +86,7 @@ io.on("connection", (s) => {
         break;
       case "Human":
         const enemy = matchQueue.shift();
-        if (enemy!==undefined && enemy.isConnected()) {
+        if (enemy !== undefined && enemy.isConnected()) {
           onMatch(player, enemy);
         } else {
           matchQueue.push(player);
@@ -93,7 +96,7 @@ io.on("connection", (s) => {
         console.error(`Match Error: Unknown type of player: ${enemy}`)
     }
   })
-  
+
   s.on("disconnect", () => {
     Util.log(`[disconnect] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
     if (player?.enemy) {
@@ -104,6 +107,6 @@ io.on("connection", (s) => {
 
 server.listen(PORT, () => {
   http.get("http://localhost:4000/__browser_sync__?method=reload")
-    .on("error", (_) => {})
+    .on("error", (_) => { })
   console.log(`Listening *:${PORT}`)
 })

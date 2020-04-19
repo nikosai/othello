@@ -10,7 +10,7 @@ export class RandomAIPlayer extends Player{
     this.enemy = enemy;
     this.color = color;
   }
-  onMyTurn(board: Board, onPut: (x: number, y: number) => Board | null, enemySkipped?: boolean) {
+  async onMyTurn(board: Board, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
     const arr = board.getCandidates();
     const c = Util.random(arr);
     Util.log(`[put] name:${this.name}, x:${c.point.x}, y:${c.point.y}`);

@@ -37,7 +37,10 @@ export class Game {
 
     this.on("turn", (res: { board: RawBoard, enemySkipped: boolean }) => {
       const f = () => {
-        if (!this.waitingTurn) setTimeout(f, 100);
+        if (!this.waitingTurn) {
+          setTimeout(f, 100);
+          return;
+        }
         Util.log(`[turn] ${res}`)
         this.waitingTurn = false;
         this.board = new Board(res.board, this.myColor);
