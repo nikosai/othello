@@ -31,11 +31,17 @@ export class NegaAlphaAIPlayer extends Player {
       return { v: (this.color === node.curState ? 1 : -1) * this.func(node), c: null };
     }
     const children = node.getCandidates();
+    const arr: {c:Candidate,node:Board,v:number}[] = [];
     for (const c of children) {
       const child = node.put(c.point.x, c.point.y, c.flip)!;
+      arr.push({ c:c, node: child, v: this.func(child) });
+    }
+    arr.sort((a, b) => b.v - a.v);
+    for (const a of arr) {
+      const child = a.node;
       const ret = await this.negaAlpha(child, depth - 1, { v: -beta.v, c: beta.c }, { v: -alpha.v, c: alpha.c });
       if (alpha.v < ret.v) {
-        alpha = { v: ret.v, c: c };
+        alpha = { v: ret.v, c: a.c };
       }
       if (alpha.v >= beta.v) return alpha;
     }

@@ -42,6 +42,7 @@ class Match {
       if (newboard) {
         Util.log(`[put] name:${player.name}, x:${x}, y:${y}`);
         this.board = newboard;
+        Util.log(`[Candidates] ${this.board.getCandidates().length}`)
         const res = this.board.checkSkipped();
         if (res) {
           this.board = res;
