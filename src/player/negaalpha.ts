@@ -7,8 +7,8 @@ type AlphaBetaRet = { v: number, c: Candidate | null };
 export class NegaAlphaAIPlayer extends Player {
   readonly func: (board: Board) => number;
   readonly depth: number;
-  constructor(func: (board: Board) => number, depth: number) {
-    super("NegaAlpha");
+  constructor(func: (board: Board) => number, depth: number, name?:string) {
+    super(name??"NegaAlpha");
     this.func = func;
     this.depth = depth;
   }

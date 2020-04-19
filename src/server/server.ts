@@ -19,56 +19,60 @@ app.set("port", PORT);
 
 let matchQueue: Player[] = [];
 
-function onMatch(p1: Player, p2: Player) {
-  let board = new Board();
-  let black: Player, white: Player;
-  if (Math.floor(Math.random() * 2) === 0) {
-    black = p1;
-    white = p2;
-  } else {
-    black = p2;
-    white = p1;
-  }
-  Util.log(`[Start] ${black.name} vs ${white.name}`)
+class Match {
+  board: Board;
+  black: Player;
+  white: Player;
+  constructor(p1: Player, p2: Player) {
+    this.board = new Board();
+    if (Math.floor(Math.random() * 2) === 0) {
+      this.black = p1;
+      this.white = p2;
+    } else {
+      this.black = p2;
+      this.white = p1;
+    }
+    Util.log(`[Start] ${this.black.name} vs ${this.white.name}`)
 
-  black.match(white, board, State.Black);
-  white.match(black, board, State.White);
+    this.black.match(this.white, this.board, State.Black);
+    this.white.match(this.black, this.board, State.White);
 
-  const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Promise<Board | null>, enemyOnPut: (x: number, y: number) => Promise<Board | null>) => async (x: number, y: number) => {
-    const newboard = board.put(x, y);
-    if (newboard) {
-      Util.log(`[put] name:${player.name}, x:${x}, y:${y}`);
-      board = newboard;
-      const res = board.checkSkipped();
-      if (res) {
-        board = res;
-        if (res.checkSkipped()) {
-          player.end(board);
-          enemy.end(board);
-          return board;
+    const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Promise<Board | null>, enemyOnPut: (x: number, y: number) => Promise<Board | null>) => async (x: number, y: number) => {
+      const newboard = this.board.put(x, y);
+      if (newboard) {
+        Util.log(`[put] name:${player.name}, x:${x}, y:${y}`);
+        this.board = newboard;
+        const res = this.board.checkSkipped();
+        if (res) {
+          this.board = res;
+          if (res.checkSkipped()) {
+            player.end(this.board);
+            enemy.end(this.board);
+            return this.board;
+          } else {
+            player.onMyTurn(this.board, playerOnPut, true);
+            return this.board;
+          }
         } else {
-          player.onMyTurn(board, playerOnPut, true);
-          return board;
+          enemy.onMyTurn(this.board, enemyOnPut);
+          return this.board;
         }
       } else {
-        enemy.onMyTurn(board, enemyOnPut);
-        return board;
+        return null;
       }
-    } else {
-      return null;
-    }
-  };
+    };
 
-  const onPuts = {
-    black: async (x: number, y: number) => {
-      return onPutMaker(black, white, onPuts.black, onPuts.white)(x, y);
-    },
-    white: async (x: number, y: number) => {
-      return onPutMaker(white, black, onPuts.white, onPuts.black)(x, y);
+    const onPuts = {
+      black: async (x: number, y: number) => {
+        return onPutMaker(this.black, this.white, onPuts.black, onPuts.white)(x, y);
+      },
+      white: async (x: number, y: number) => {
+        return onPutMaker(this.white, this.black, onPuts.white, onPuts.black)(x, y);
+      }
     }
+
+    this.black.onMyTurn(this.board, onPuts.black);;
   }
-
-  black.onMyTurn(board, onPuts.black);;
 }
 
 io.on("connection", (s) => {
@@ -82,12 +86,12 @@ io.on("connection", (s) => {
     switch (res.enemy) {
       case "AI":
         // onMatch(player,new RandomAIPlayer());
-        onMatch(player, new SimpleAI(10));
+        new Match(player, new SimpleAI(10));
         break;
       case "Human":
         const enemy = matchQueue.shift();
         if (enemy !== undefined && enemy.isConnected()) {
-          onMatch(player, enemy);
+          new Match(player, enemy);
         } else {
           matchQueue.push(player);
         }
