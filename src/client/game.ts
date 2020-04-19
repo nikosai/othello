@@ -24,14 +24,23 @@ export class Game {
     this.on("gameEnd", (res: { board: RawBoard, stones: number, enemy: number }) => {
       Util.log(`[gameEnd] ${res.board}`);
       this.board = new Board(res.board, this.myColor);
-      const str = `試合終了！ ${res.stones}対${res.enemy}で`
-      if (res.stones > res.enemy) {
-        M.toast({ html: str + `あなたの勝ちです！` })
-      } else if (res.stones < res.enemy) {
-        M.toast({ html: str + `あなたの負けです……` })
-      } else {
-        M.toast({ html: str + `引き分けです` })
-      }
+      const d = res.stones - res.enemy;
+      let str = `試合終了！ ${res.stones}対${res.enemy}で勝負差${Math.abs(d)}の`
+      if (d >= 54) str += "完勝";
+      else if (d >= 40) str += "圧勝";
+      else if (d >= 26) str += "大勝";
+      else if (d >= 12) str += "激戦勝";
+      else if (d >= 2) str += "接戦勝";
+      else if (d == 0) str += "引き分け";
+      else if (d >= -10) str += "接戦負";
+      else if (d >= -24) str += "激戦負";
+      else if (d >= -38) str += "大敗";
+      else if (d >= -52) str += "惨敗";
+      else str += "沈黙";
+      str += "です";
+      if (d > 0) str += "！";
+      else if (d < 0) str += "……";
+      M.toast({ html: str });
       this.finalize();
     })
 
