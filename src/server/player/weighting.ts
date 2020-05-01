@@ -1,5 +1,5 @@
 import { NegaAlphaAIPlayer } from "./negaalpha";
-import { Util, State } from "../util";
+import { State } from "../../util";
 
 // https://ukyo.sakura.ne.jp/othello/5-1.html
 const weights = [

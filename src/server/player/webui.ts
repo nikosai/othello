@@ -1,6 +1,6 @@
 import { Player } from "../player";
-import { Board } from "../board";
-import { State, Util } from "../util";
+import { Board } from "../../board";
+import { State, Util } from "../../util";
 
 // WebUIのサーバ側
 export class WebUIPlayer extends Player {

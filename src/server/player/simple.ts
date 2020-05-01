@@ -1,5 +1,5 @@
 import { NegaAlphaAIPlayer } from "./negaalpha";
-import { Util } from "../util";
+import { Util } from "../../util";
 
 export class SimpleAI extends NegaAlphaAIPlayer{
   constructor(depth:number) {

@@ -2,12 +2,10 @@ import express from "express";
 import * as http from "http";
 import socketio from "socket.io";
 import { Util, State } from "../util";
-import { WebUIPlayer } from "../player/webui";
-import { Player } from "../player";
+import { WebUIPlayer } from "./player/webui";
+import { Player } from "./player";
 import { Board } from "../board";
-import { RandomAIPlayer } from "../player/random";
-import { SimpleAI } from "../player/simple";
-import { WeightingAI } from "../player/weighting";
+import { WeightingAI } from "./player/weighting";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;

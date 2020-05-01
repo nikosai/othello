@@ -1,6 +1,6 @@
 import { Player } from "../player";
-import { Board } from "../board";
-import { State, Candidate, Util } from "../util";
+import { Board } from "../../board";
+import { State, Candidate } from "../../util";
 
 type AlphaBetaRet = { v: number, c: Candidate | null };
 

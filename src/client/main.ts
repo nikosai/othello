@@ -1,7 +1,5 @@
-import { Game } from "./game";
 import io from "socket.io-client";
 import { DOMControl } from "./dom";
-import { Util, RawBoard, State } from "../util";
 
 const socket = io.connect();
 

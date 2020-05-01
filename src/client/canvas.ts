@@ -1,6 +1,4 @@
-import { Board } from "../board";
 import { Util, Box, Vec2, State, RawBoard } from "../util";
-import M from "materialize-css";
 import { Game } from "./game";
 const FRAMERATE = 60;
 

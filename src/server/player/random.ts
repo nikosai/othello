@@ -1,6 +1,6 @@
 import { Player } from "../player";
-import { Board } from "../board";
-import { State, Util } from "../util";
+import { Board } from "../../board";
+import { State, Util } from "../../util";
 
 export class RandomAIPlayer extends Player{
   constructor() {

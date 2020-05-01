@@ -1,5 +1,5 @@
-import { Board } from "./board";
-import { State, Vec2 } from "./util";
+import { Board } from "../board";
+import { State, Vec2 } from "../util";
 
 export abstract class Player{
   name: string;
