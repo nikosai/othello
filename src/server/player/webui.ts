@@ -24,11 +24,11 @@ export class WebUIPlayer extends Player {
     return this.isConnected() && this.enemy === undefined;
   }
 
-  async onMyTurn(info:MatchInfo, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
+  async onMyTurn(info:MatchInfo, onPut: (x: number, y: number) => Promise<MatchInfo | null>, enemySkipped?: boolean) {
     this.socket.emit("turn", { info: info, enemySkipped: enemySkipped ?? false });
     const listener = async (res: { x: number, y: number }) => {
-      let board = await onPut(res.x, res.y);
-      if (board) {
+      let info = await onPut(res.x, res.y);
+      if (info) {
         this.socket.emit("putSuccess", { info: info })
       } else {
         this.socket.emit("putFail");

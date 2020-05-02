@@ -12,7 +12,7 @@ export abstract class Player{
     this.name = name;
   }
   abstract match(enemy: Player, info: MatchInfo, color:State): void;
-  abstract async onMyTurn(info: MatchInfo, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean): Promise<void>;
+  abstract async onMyTurn(info: MatchInfo, onPut: (x: number, y: number) => Promise<MatchInfo | null>, enemySkipped?: boolean): Promise<void>;
   
   isConnected(): boolean{
     return true;

@@ -26,7 +26,7 @@ export class Match {
     this.black.match(this.white, this.getInfo(), State.Black);
     this.white.match(this.black, this.getInfo(), State.White);
 
-    const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Promise<Board | null>, enemyOnPut: (x: number, y: number) => Promise<Board | null>) => async (x: number, y: number) => {
+    const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Promise<MatchInfo | null>, enemyOnPut: (x: number, y: number) => Promise<MatchInfo | null>) => async (x: number, y: number):Promise<MatchInfo | null> => {
       const newboard = this.board.put(x, y);
       if (newboard) {
         Util.log(`[put] name:${player.name}, x:${x}, y:${y}`);
@@ -39,14 +39,14 @@ export class Match {
             player.end(this.getInfo());
             enemy.end(this.getInfo());
             io.of("watch").to(this.id).emit("end", { info: new MatchInfo(this) });
-            return this.board;
+            return this.getInfo();
           } else {
             this.onTurn(player, playerOnPut, true);
-            return this.board;
+            return this.getInfo();
           }
         } else {
           this.onTurn(enemy, enemyOnPut);
-          return this.board;
+          return this.getInfo();
         }
       } else {
         return null;
@@ -66,7 +66,7 @@ export class Match {
     Match.list.push(this);
   }
 
-  onTurn(p: Player, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
+  onTurn(p: Player, onPut: (x: number, y: number) => Promise<MatchInfo | null>, enemySkipped?: boolean) {
     io.of("watch").to(this.id).emit("turn", { info: new MatchInfo(this) });
     Util.log(`[watch/turn] users:${io.sockets.adapter.rooms[this.id]?.length ?? 0}`)
     p.onMyTurn(this.getInfo(), onPut, enemySkipped);

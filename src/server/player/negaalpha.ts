@@ -16,7 +16,7 @@ export class NegaAlphaAIPlayer extends Player {
     this.enemy = enemy;
     this.color = color;
   }
-  async onMyTurn(info: MatchInfo, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
+  async onMyTurn(info: MatchInfo, onPut: (x: number, y: number) => Promise<MatchInfo | null>, enemySkipped?: boolean) {
     const ret = (await this.negaAlpha(new Board(info.board, info.turn), this.depth,
       { v: -Infinity, c: null },
       { v: Infinity, c: null })).c;
