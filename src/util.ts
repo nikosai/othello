@@ -1,3 +1,5 @@
+import { Match } from "./server/match";
+
 export class Util{
   static assertIsDefined<T>(val: T): asserts val is NonNullable<T> {
     if (val === undefined || val === null) {
@@ -75,5 +77,21 @@ export class Candidate{
   constructor(point:Vec2, flip:Vec2[]) {
     this.point = point;
     this.flip = flip;
+  }
+}
+
+export class MatchInfo{
+  id: string
+  board: RawBoard
+  black: { name: string, count: number }
+  white: { name: string, count: number }
+  turn: State;
+
+  constructor(m:Match){
+    this.id = m.id;
+    this.board = m.board.getBoard();
+    this.black = { name: m.black.name, count: m.board.count(State.Black) };
+    this.white = { name: m.white.name, count: m.board.count(State.White) };
+    this.turn = m.board.curState;
   }
 }

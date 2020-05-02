@@ -10,7 +10,7 @@ import { Match } from "./match";
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 const server = http.createServer(app);
-const io = socketio(server);
+export const io = socketio(server);
 
 app.use(express.static("docs"));
 
@@ -42,7 +42,7 @@ io.on("connection", (s) => {
         // });
         // matchQueue = matchQueue.filter((p) => p?.isConnected());
         const enemy = matchQueue.shift();
-        if (enemy !== undefined && enemy.isConnected()) {
+        if (enemy?.isWaiting()) {
           match = new Match(player, enemy);
         } else {
           matchQueue.push(player);
@@ -57,14 +57,36 @@ io.on("connection", (s) => {
     
   // })
 
+  s.on("watch", (res) => {
+    const match = Match.find(res.id);
+    if (match === null) {
+      // ??
+      return;
+    }
+    match.watch(s);
+  })
+
   s.on("disconnect", () => {
     Util.log(`[disconnect] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
     match?.onExit();
   })
 })
 
+const roomlist = io.of("roomlist");
+roomlist.on("connection", (s) => {
+  let request: NodeJS.Timeout;
+  s.on("request", (res) => { 
+    const f = () => {
+      s.emit("update", { roomList: Match.list.map((m) => m.getInfo()) })
+    };
+    request = setInterval(f, res?.interval ?? 5000);
+    f();
+   })
+  s.on("stop", () => {
+    clearInterval(request);
+  })
+})
+
 server.listen(PORT, () => {
-  http.get("http://localhost:4000/__browser_sync__?method=reload")
-    .on("error", (_) => { })
   console.log(`Listening *:${PORT}`)
 })

@@ -1,7 +1,9 @@
 import { Board } from "../board";
 import { Player } from "./player";
 import * as uuid from "uuid";
-import { Util, State } from "../util";
+import { Util, State, MatchInfo } from "../util";
+import { Socket, Namespace } from "socket.io";
+import { io } from "./server";
 
 export class Match {
   static list: Match[] = [];
@@ -9,9 +11,11 @@ export class Match {
   black: Player;
   white: Player;
   id: string;
+  room: Namespace;
   constructor(p1: Player, p2: Player) {
     this.id = uuid.v4();
     this.board = new Board();
+    this.room = io.of("watch").to(this.id);
     if (Math.floor(Math.random() * 2) === 0) {
       this.black = p1;
       this.white = p2;
@@ -38,11 +42,13 @@ export class Match {
             enemy.end(this.board);
             return this.board;
           } else {
-            player.onMyTurn(this.board, playerOnPut, true);
+            this.room.emit("turn", { board: this.board, enemySkipped: true, });
+            this.onTurn(player, playerOnPut, true);
             return this.board;
           }
         } else {
-          enemy.onMyTurn(this.board, enemyOnPut);
+          this.room.emit("turn", { board: this.board });
+          this.onTurn(enemy, enemyOnPut);
           return this.board;
         }
       } else {
@@ -59,17 +65,44 @@ export class Match {
       }
     }
 
-    this.black.onMyTurn(this.board, onPuts.black);
+    this.onTurn(this.black, onPuts.black);
     Match.list.push(this);
   }
 
-  equals(m:Match) {
-    return m.id === this.id
+  onTurn(p: Player, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
+    this.room.emit("turn", {
+      board: this.board.getBoard(), color: p.color, enemySkipped: enemySkipped ?? false
+    });
+    p.onMyTurn(this.board, onPut, enemySkipped);
+  }
+
+  equals(m:Match|string) {
+    if (m instanceof Match) return m.id === this.id
+    else return m === this.id;
+  }
+
+  getInfo():MatchInfo{
+    return new MatchInfo(this);
+  }
+
+  static find(id: string) {
+    for (let m of Match.list) {
+      if (m.equals(id)) return m;
+    }
+    return null;
+  }
+
+  watch(s: Socket) {
+    s.join(this.id);
   }
 
   onExit() {
     Match.list = Match.list.filter((m)=>!this.equals(m));
     this.black.enemyDisconnected();
     this.white.enemyDisconnected();
+    this.room.emit("matchDisconnected");
+    this.room.clients((e:any, socketids:string[]) => {
+      socketids.forEach((id) => { io.sockets.sockets[id].leave(this.id) });
+    })
   }
 }

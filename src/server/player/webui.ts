@@ -20,6 +20,10 @@ export class WebUIPlayer extends Player {
     return this.socket.connected;
   }
 
+  isWaiting() {
+    return this.isConnected() && this.enemy !== undefined;
+  }
+
   async onMyTurn(board: Board, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
     this.socket.emit("turn", { board: board.getBoard(), enemySkipped: enemySkipped ?? false });
     const listener = async (res: { x: number, y: number }) => {

@@ -17,6 +17,9 @@ export abstract class Player{
   isConnected(): boolean{
     return true;
   }
+  isWaiting(): boolean{
+    return false;
+  }
   enemyDisconnected(): void {}
   skip(board: Board): void {};
   end(board: Board): void { };

@@ -1,7 +1,7 @@
 import io from "socket.io-client";
 import { DOMControl } from "./dom";
 
-const socket = io.connect();
+const socket = io();
 
 function initGame() {
   DOMControl.init(socket);

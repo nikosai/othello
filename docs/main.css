@@ -31,11 +31,11 @@ body {
   padding: 5px 0;
 }
 
-#message>*{
-  margin: 0 5px;
+.matchInfo>*{
+  margin: 0 0.2em;
 }
 
-#message>.stone{
+.matchInfo>.stone{
   width: 0.8em;
   height: 0.8em;
   display: inline-block;
@@ -43,20 +43,20 @@ body {
   border: 2px solid black;
 }
 
-#my-name, #enemy-name{
+.matchInfo>.playerName{
   border-radius: 0.4em;
   padding:0.2em;
 }
 
-#message>.white{
+.matchInfo>.white{
   background: white;
 }
 
-#message>.black{
+.matchInfo>.black{
   background: black;
 }
 
-#message>.turn{
+.matchInfo>.turn{
   background: rgba(255, 0, 0, 0.3);
 }
 

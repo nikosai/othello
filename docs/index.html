@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="main.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <title>Othello</title>
 </head>
 <body>
   <div id="wrapper">
-    <h4 id="message"><span id="my-name"></span><i id="my-color"></i><span id="my-stones"></span> vs <span id="enemy-stones"></span><i id="enemy-color"></i><span id="enemy-name"></span></h3>
+    <h4 class="matchInfo" id="message"><span id="my-name" class="playerName"></span><i id="my-color"></i><span id="my-stones"></span> vs <span id="enemy-stones"></span><i id="enemy-color"></i><span id="enemy-name" class="playerName"></span></h4>
     <div id="canvas-outer">
       <div id="canvas-wrapper">
         <canvas id="canvas"></canvas>
@@ -30,6 +31,25 @@
       </div>
     </div>
   </div>
+  <div id="modal-roomlist" class="modal">
+    <div class="modal-content">
+      <h4>観戦モード</h4>
+      <p>観に行く部屋を選ぶんじゃ</p>
+      <div id="modal-roomlist-list" class="collection">
+        <a href="#!" class="collection-item">
+          <div class="matchInfo grey-text text-darken-4">
+            <span class="playerName turn">aaaaa</span>
+            <i class="black stone"></i>
+            <span>64 vs 64</span>
+            <i class="white stone"></i>
+            <span class="playerName">bbbbb</span>
+            <span class="secondary-content"><i class="material-icons">forward</i></span>
+          </div>
+        </a>
+      </div>
+      <button class="waves-effect waves-light btn" id="modal-roomlist-back">もどる</button>
+    </div>
+  </div>
   <div id="modal-error" class="modal">
     <div class="modal-content">
       <h4>問題が発生しました</h4>
@@ -38,7 +58,7 @@
       <pre class="card-panel red darken-2 white-text"></pre>
     </div>
     <div class="modal-footer">
-      <a href="javascript:void(0)" class="modal-close waves-effect waves-green btn">Reload</a>
+      <a href="javascript:void(0)" class="waves-effect waves-green btn">Reload</a>
     </div>
   </div>
   <script src="/socket.io/socket.io.js"></script>
