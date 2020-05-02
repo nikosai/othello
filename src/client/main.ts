@@ -1,13 +1,17 @@
 import io from "socket.io-client";
 import { DOMControl } from "./dom";
+import { initWatch } from "./watch";
 
 const socket = io();
+export const watch = io("/watch");
+export const roomlist = io("/roomlist");
 
 function initGame() {
   DOMControl.init(socket);
 }
 
 initGame();
+initWatch();
 
 let unloading = false;
 window.addEventListener("beforeunload", (e) => {

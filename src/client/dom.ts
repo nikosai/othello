@@ -1,9 +1,7 @@
 import M from "materialize-css";
 import { RawBoard, State, Util, MatchInfo } from "../util";
 import { Game } from "./game";
-import io from "socket.io-client";
-
-const roomlist = io("/roomlist");
+import { watch, roomlist } from "./main";
 
 export class DOMControl{
   static init(socket:SocketIOClient.Socket) {
@@ -50,7 +48,7 @@ export class DOMControl{
               a.className = "collection-item"
               a.addEventListener("click", () => {
                 roomlist.emit("stop");
-                socket.emit("watch", { id: m.id });
+                watch.emit("watch", { id: m.id });
               })
               const div = document.createElement("div");
               div.className = "matchInfo grey-text text-darken-4";
@@ -125,10 +123,7 @@ export class DOMControl{
     const pre = modal.querySelector(".modal-content")?.querySelector("pre")!;
     pre.innerText = e;
     M.Modal.init(modal, {
-      dismissible: false,
-      onCloseStart: () => {
-        location.reload();
-      }
+      dismissible: false
     }).open();
   }
 }

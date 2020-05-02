@@ -57,15 +57,6 @@ io.on("connection", (s) => {
     
   // })
 
-  s.on("watch", (res) => {
-    const match = Match.find(res.id);
-    if (match === null) {
-      // ??
-      return;
-    }
-    match.watch(s);
-  })
-
   s.on("disconnect", () => {
     Util.log(`[disconnect] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
     match?.onExit();
@@ -86,6 +77,19 @@ roomlist.on("connection", (s) => {
     clearInterval(request);
   })
 })
+
+const watch = io.of("watch");
+watch.on("connection", (s) => {
+  s.on("watch", (res) => {
+    Util.log(`[watch] id:${res.id}`);
+    const match = Match.find(res.id);
+    if (match === null) {
+      console.error("Error: Match not found")
+      return;
+    }
+    match.watch(s);
+  })
+});
 
 server.listen(PORT, () => {
   console.log(`Listening *:${PORT}`)

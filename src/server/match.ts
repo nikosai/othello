@@ -11,11 +11,9 @@ export class Match {
   black: Player;
   white: Player;
   id: string;
-  room: Namespace;
   constructor(p1: Player, p2: Player) {
     this.id = uuid.v4();
     this.board = new Board();
-    this.room = io.of("watch").to(this.id);
     if (Math.floor(Math.random() * 2) === 0) {
       this.black = p1;
       this.white = p2;
@@ -42,12 +40,10 @@ export class Match {
             enemy.end(this.board);
             return this.board;
           } else {
-            this.room.emit("turn", { board: this.board, enemySkipped: true, });
             this.onTurn(player, playerOnPut, true);
             return this.board;
           }
         } else {
-          this.room.emit("turn", { board: this.board });
           this.onTurn(enemy, enemyOnPut);
           return this.board;
         }
@@ -70,9 +66,8 @@ export class Match {
   }
 
   onTurn(p: Player, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
-    this.room.emit("turn", {
-      board: this.board.getBoard(), color: p.color, enemySkipped: enemySkipped ?? false
-    });
+    io.of("watch").to(this.id).emit("turn", { info: new MatchInfo(this) });
+    Util.log(`[watch/turn] users:${io.sockets.adapter.rooms[this.id]?.length ?? 0}`)
     p.onMyTurn(this.board, onPut, enemySkipped);
   }
 
@@ -93,16 +88,19 @@ export class Match {
   }
 
   watch(s: Socket) {
-    s.join(this.id);
+    s.join(this.id, (err) => {
+      console.error(err);
+      console.log(s.rooms);
+    });
   }
 
   onExit() {
     Match.list = Match.list.filter((m)=>!this.equals(m));
     this.black.enemyDisconnected();
     this.white.enemyDisconnected();
-    this.room.emit("matchDisconnected");
-    this.room.clients((e:any, socketids:string[]) => {
-      socketids.forEach((id) => { io.sockets.sockets[id].leave(this.id) });
-    })
+    io.of("watch").to(this.id).emit("matchDisconnected");
+    for (const s in io.sockets.adapter.rooms[this.id]?.sockets) {
+      io.sockets.sockets[s]?.leave(this.id);
+    }
   }
 }

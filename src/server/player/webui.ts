@@ -21,7 +21,7 @@ export class WebUIPlayer extends Player {
   }
 
   isWaiting() {
-    return this.isConnected() && this.enemy !== undefined;
+    return this.isConnected() && this.enemy === undefined;
   }
 
   async onMyTurn(board: Board, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
