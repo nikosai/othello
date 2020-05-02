@@ -34,6 +34,13 @@ io.on("connection", (s) => {
         match = new Match(player, new WeightingAI(6));
         break;
       case "Human":
+        // matchQueue.push(player);
+        // io.sockets.emit("updateWaiting", {
+        //   queue: matchQueue
+        //     .filter((p) => p?.isConnected())
+        //     .map((p) => { return { name: p.name, id: p.id } })
+        // });
+        // matchQueue = matchQueue.filter((p) => p?.isConnected());
         const enemy = matchQueue.shift();
         if (enemy !== undefined && enemy.isConnected()) {
           match = new Match(player, enemy);
@@ -42,9 +49,13 @@ io.on("connection", (s) => {
         }
         break;
       default:
-        console.error(`Match Error: Unknown type of player: ${enemy}`)
+        console.error(`Match Error: Unknown type of player: ${res.enemy}`)
     }
   })
+
+  // s.on("matchRequest", (res) => {
+    
+  // })
 
   s.on("disconnect", () => {
     Util.log(`[disconnect] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
