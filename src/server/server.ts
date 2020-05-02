@@ -6,6 +6,7 @@ import { WebUIPlayer } from "./player/webui";
 import { Player } from "./player";
 import { Board } from "../board";
 import { WeightingAI } from "./player/weighting";
+import * as uuid from "uuid";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -19,10 +20,13 @@ app.set("port", PORT);
 let matchQueue: Player[] = [];
 
 class Match {
+  static list: Match[] = [];
   board: Board;
   black: Player;
   white: Player;
+  id: string;
   constructor(p1: Player, p2: Player) {
+    this.id = uuid.v4();
     this.board = new Board();
     if (Math.floor(Math.random() * 2) === 0) {
       this.black = p1;
@@ -71,7 +75,18 @@ class Match {
       }
     }
 
-    this.black.onMyTurn(this.board, onPuts.black);;
+    this.black.onMyTurn(this.board, onPuts.black);
+    Match.list.push(this);
+  }
+
+  equals(m:Match) {
+    return m.id === this.id
+  }
+
+  onExit() {
+    Match.list = Match.list.filter((m)=>!this.equals(m));
+    this.black.enemyDisconnected();
+    this.white.enemyDisconnected();
   }
 }
 
@@ -80,6 +95,7 @@ io.on("connection", (s) => {
   Util.log(`[connection] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
 
   let player: Player | undefined;
+  let match: Match | undefined;
   s.on("match", (res: { name: string, enemy: string }) => {
     Util.log(`[match] from: ${res.name}`);
     player = new WebUIPlayer(res.name, s)
@@ -87,12 +103,12 @@ io.on("connection", (s) => {
       case "AI":
         // onMatch(player,new RandomAIPlayer());
         // new Match(player, new SimpleAI(10));
-        new Match(player, new WeightingAI(6));
+        match = new Match(player, new WeightingAI(6));
         break;
       case "Human":
         const enemy = matchQueue.shift();
         if (enemy !== undefined && enemy.isConnected()) {
-          new Match(player, enemy);
+          match = new Match(player, enemy);
         } else {
           matchQueue.push(player);
         }
@@ -104,9 +120,7 @@ io.on("connection", (s) => {
 
   s.on("disconnect", () => {
     Util.log(`[disconnect] total: ${s.client.conn.server.clientsCount}, from: ${addr}, id: ${s.id}`);
-    if (player?.enemy) {
-      player.enemy.enemyDisconnected();
-    }
+    match?.onExit();
   })
 })
 

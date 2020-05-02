@@ -24,9 +24,9 @@ export class DOMControl{
       a.addEventListener("click", () => {
         let name = (<HTMLInputElement>document.getElementById("modal-init-name")).value;
         if (name === "") {
-          // M.toast({ html: "名前を入力せい", classes: "red darken-4" });
-          // return;
-          name = "ゲスト";
+          M.toast({ html: "名前を入力せえ", classes: "red darken-4" });
+          return;
+          // name = "ゲスト";
         }
         socket.once("matched", (res: { name: string, board: RawBoard, color: State }) => {
           Util.log(`[matched] ${res.board}`)

@@ -35,7 +35,7 @@ export class WebUIPlayer extends Player {
   }
 
   enemyDisconnected() {
-    this.socket.emit("enemyDisconnected");
+    if (this.isConnected()) this.socket.emit("enemyDisconnected");
   }
 
   skip(board: Board) {

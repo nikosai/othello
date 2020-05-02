@@ -9,12 +9,17 @@ function initGame() {
 
 initGame();
 
+let unloading = false;
+window.addEventListener("beforeunload", (e) => {
+  unloading = true;
+})
+
 socket.on("connect", () => {
   console.log("connected.")
 })
 
 socket.on("disconnect", () => {
-  DOMControl.onError("サーバとの通信が切断されました");
+  if (!unloading) DOMControl.onError("サーバとの通信が切断されました");
 })
 
 socket.on("error", (e:any) => {
