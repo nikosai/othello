@@ -32,6 +32,19 @@ export class Util{
   static random<T>(arr:T[]):T {
     return arr[Math.floor(Math.random() * arr.length)];
   }
+  static calcResult(d: number) {
+    if (d >= 54) return "完勝";
+    if (d >= 40) return "圧勝";
+    if (d >= 26) return "大勝";
+    if (d >= 12) return "激戦勝";
+    if (d >= 2) return "接戦勝";
+    if (d == 0) return "引き分け";
+    if (d >= -10) return "接戦負";
+    if (d >= -24) return "激戦負";
+    if (d >= -38) return "大敗";
+    if (d >= -52) return "惨敗";
+    return "沈黙";
+  }
 }
 
 export class Box {

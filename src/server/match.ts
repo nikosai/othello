@@ -23,8 +23,8 @@ export class Match {
     }
     Util.log(`[Start] ${this.black.name} vs ${this.white.name}`)
 
-    this.black.match(this.white, this.board, State.Black);
-    this.white.match(this.black, this.board, State.White);
+    this.black.match(this.white, this.getInfo(), State.Black);
+    this.white.match(this.black, this.getInfo(), State.White);
 
     const onPutMaker = (player: Player, enemy: Player, playerOnPut: (x: number, y: number) => Promise<Board | null>, enemyOnPut: (x: number, y: number) => Promise<Board | null>) => async (x: number, y: number) => {
       const newboard = this.board.put(x, y);
@@ -36,8 +36,9 @@ export class Match {
         if (res) {
           this.board = res;
           if (res.checkSkipped()) {
-            player.end(this.board);
-            enemy.end(this.board);
+            player.end(this.getInfo());
+            enemy.end(this.getInfo());
+            io.of("watch").to(this.id).emit("end", { info: new MatchInfo(this) });
             return this.board;
           } else {
             this.onTurn(player, playerOnPut, true);
@@ -68,7 +69,7 @@ export class Match {
   onTurn(p: Player, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
     io.of("watch").to(this.id).emit("turn", { info: new MatchInfo(this) });
     Util.log(`[watch/turn] users:${io.sockets.adapter.rooms[this.id]?.length ?? 0}`)
-    p.onMyTurn(this.board, onPut, enemySkipped);
+    p.onMyTurn(this.getInfo(), onPut, enemySkipped);
   }
 
   equals(m:Match|string) {
@@ -91,6 +92,7 @@ export class Match {
     s.join(this.id, (err) => {
       console.error(err);
       console.log(s.rooms);
+      s.emit("init", {info: this.getInfo()});
     });
   }
 

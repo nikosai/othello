@@ -1,5 +1,5 @@
 import { Board } from "../board";
-import { State } from "../util";
+import { State, MatchInfo } from "../util";
 import * as uuid from "uuid";
 
 export abstract class Player{
@@ -11,8 +11,8 @@ export abstract class Player{
     this.id = uuid.v4();
     this.name = name;
   }
-  abstract match(enemy: Player, board: Board, color:State): void;
-  abstract async onMyTurn(board: Board, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean): Promise<void>;
+  abstract match(enemy: Player, info: MatchInfo, color:State): void;
+  abstract async onMyTurn(info: MatchInfo, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean): Promise<void>;
   
   isConnected(): boolean{
     return true;
@@ -21,8 +21,8 @@ export abstract class Player{
     return false;
   }
   enemyDisconnected(): void {}
-  skip(board: Board): void {};
-  end(board: Board): void { };
+  skip(info: MatchInfo): void {};
+  end(info: MatchInfo): void { };
   isMyColor(s: State): boolean{
     return this.color !== undefined && s === this.color;
   }

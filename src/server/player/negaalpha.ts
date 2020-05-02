@@ -1,6 +1,6 @@
 import { Player } from "../player";
 import { Board } from "../../board";
-import { State, Candidate } from "../../util";
+import { State, Candidate, MatchInfo } from "../../util";
 
 type AlphaBetaRet = { v: number, c: Candidate | null };
 
@@ -12,12 +12,12 @@ export class NegaAlphaAIPlayer extends Player {
     this.func = func;
     this.depth = depth;
   }
-  match(enemy: Player, board: Board, color: State) {
+  match(enemy: Player, info: MatchInfo, color: State) {
     this.enemy = enemy;
     this.color = color;
   }
-  async onMyTurn(board: Board, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
-    const ret = (await this.negaAlpha(board, this.depth,
+  async onMyTurn(info: MatchInfo, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
+    const ret = (await this.negaAlpha(new Board(info.board, info.turn), this.depth,
       { v: -Infinity, c: null },
       { v: Infinity, c: null })).c;
     if (!ret) {

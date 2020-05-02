@@ -1,40 +1,51 @@
-import { Util, Box, Vec2, State, RawBoard } from "../util";
-import { Game } from "./game";
+import { Util, Box, Vec2, State, RawBoard, MatchInfo } from "../util";
+import { Board } from "../board";
 const FRAMERATE = 60;
 
+const canvas = <HTMLCanvasElement>document.getElementById("canvas")!;
 export class BoardCanvas{
   line_width: number = 0.005;
   square_size: Box;
-  elem: HTMLCanvasElement;
   cxt: CanvasRenderingContext2D;
   mouse_at: Vec2 | null = null;
-  game: Game;
-  constructor(element: HTMLCanvasElement,game:Game) {
-    this.elem = element;
-    this.game = game;
-    this.cxt = Util.checkIsDefined(element.getContext('2d'));
+  board: Board;
+  myState: State;
+  update: NodeJS.Timeout;
+  onPut: ((x: number, y: number) => void) | null;
+  constructor(info:MatchInfo, myState: State, onPut?:(x: number, y: number) => void) {
+    this.board = new Board(info.board, info.turn);
+    this.myState = myState;
+    this.onPut = onPut ?? null;
+    this.cxt = Util.checkIsDefined(canvas.getContext('2d'));
     this.square_size = new Box(
-      (1 - this.line_width * (game.board.width + 1)) / game.board.width,
-      (1 - this.line_width * (game.board.height + 1)) / game.board.height
+      (1 - this.line_width * (this.board.width + 1)) / this.board.width,
+      (1 - this.line_width * (this.board.height + 1)) / this.board.height
     );
     const listenerMaker = (f:(x:number,y:number)=>void) => (e:MouseEvent) => {
-      const rect = this.elem.getBoundingClientRect();
+      const rect = canvas.getBoundingClientRect();
       const x = e.clientX - Math.floor(rect.left);
       const y = e.clientY - Math.floor(rect.top);
-      const i = Math.floor(x / this.elem.width * window.devicePixelRatio * game.board.width);
-      const j = Math.floor(y / this.elem.height * window.devicePixelRatio * game.board.height);
+      const i = Math.floor(x / canvas.width * window.devicePixelRatio * this.board.width);
+      const j = Math.floor(y / canvas.height * window.devicePixelRatio * this.board.height);
       f(i, j);
     }
 
     document.addEventListener('click', listenerMaker((x,y)=>this.onClick(x,y)));
     document.addEventListener('mousemove', listenerMaker((x, y) => this.onMouseMove(x, y)));
+
+    const leftState = this.myState === State.Empty ? State.Black : this.myState;
+    document.getElementById("wrapper")!.style.display = "block";
+    document.getElementById("my-color")!.className = leftState === State.Black ? "black stone" : "white stone";
+    document.getElementById("enemy-color")!.className = leftState === State.Black ? "white stone" : "black stone";
+    document.getElementById("my-name")!.innerText = leftState === State.Black ? info.black.name : info.white.name;
+    document.getElementById("enemy-name")!.innerText = leftState === State.Black ? info.white.name : info.black.name;
     
-    setInterval(() => {
+    this.update = setInterval(() => {
       const canvasWrapper = document.getElementById("canvas-wrapper")!;
     
       // resize
-      element.width = canvasWrapper.clientWidth * window.devicePixelRatio;
-      element.height = canvasWrapper.clientHeight * window.devicePixelRatio;
+      canvas.width = canvasWrapper.clientWidth * window.devicePixelRatio;
+      canvas.height = canvasWrapper.clientHeight * window.devicePixelRatio;
     
       // update
       this.drawBoard();
@@ -44,21 +55,22 @@ export class BoardCanvas{
   drawBoard() {
     const redOverlay = 'rgba(255,0,0,0.3)';
     const grayOverlay = 'rgba(0,0,0,0.2)';
-
-    document.getElementById("my-stones")!.innerText = this.game.board.count(this.game.myColor).toString();
-    document.getElementById("enemy-stones")!.innerText = this.game.board.count(Util.reverse(this.game.myColor)).toString();
-    document.getElementById("my-name")!.className = this.game.isMyTurn() ? "turn playerName" : "playerName";
-    document.getElementById("enemy-name")!.className = this.game.isMyTurn() ? "playerName" : "turn playerName";
+    
+    const leftState = this.myState === State.Empty ? State.Black : this.myState;
+    document.getElementById("my-stones")!.innerText = this.board.count(leftState).toString();
+    document.getElementById("enemy-stones")!.innerText = this.board.count(Util.reverse(leftState)).toString();
+    document.getElementById("my-name")!.className = this.board.curState === leftState ? "turn playerName" : "playerName";
+    document.getElementById("enemy-name")!.className = this.board.curState === Util.reverse(leftState) ? "turn playerName" : "playerName";
     
     let res: Vec2[] = [];
-    if (this.game.isMyTurn() && this.mouse_at) {
-      res = this.game.board.check(this.mouse_at.x, this.mouse_at.y);
+    if (this.myState === this.board.curState && this.mouse_at) {
+      res = this.board.check(this.mouse_at.x, this.mouse_at.y);
     }
 
-    for (let y = 0; y < this.game.board.height; y++) {
-      for (let x = 0; x < this.game.board.width; x++) {
+    for (let y = 0; y < this.board.height; y++) {
+      for (let x = 0; x < this.board.width; x++) {
         this.fillSquare('green', x, y);
-        const st = this.game.board.get(x, y);
+        const st = this.board.get(x, y);
         if (st !== State.Empty) {
           this.drawStone(
             (st === State.Black ? 'black' : 'white'),
@@ -70,9 +82,9 @@ export class BoardCanvas{
 
         if (this.mouse_at) {
           if (this.mouse_at.equals(x, y)) {
-            if (this.game.board.get(x, y) === State.Empty) {
+            if (this.board.get(x, y) === State.Empty) {
               this.drawStone(
-                (this.game.myColor === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
+                (this.myState === State.Black ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)'),
                 'rgba(0,0,0,0.3)',
                 0.003,
                 0.65,
@@ -87,6 +99,10 @@ export class BoardCanvas{
     }
   }
 
+  setInfo(info: MatchInfo) {
+    this.board = new Board(info.board, info.turn);
+  }
+
   fillSquare(fillStyle: string | CanvasGradient | CanvasPattern, x: number, y: number) {
     const left = this.line_width + (this.square_size.width + this.line_width) * x;
     const top = this.line_width + (this.square_size.height + this.line_width) * y;
@@ -97,24 +113,25 @@ export class BoardCanvas{
     this.drawEllipseAtPercent(
       fillStyle,
       strokeStyle,
-      lineWidth * (this.elem.height + this.elem.width) / 2,
-      (2*x+1)/(2*this.game.board.width),
-      (2*y+1)/(2*this.game.board.height),
+      lineWidth * (canvas.height + canvas.width) / 2,
+      (2*x+1)/(2*this.board.width),
+      (2*y+1)/(2*this.board.height),
       this.square_size.width * scale,
       this.square_size.height * scale
     );
   }
 
   onClick(x: number, y: number) {
-    if (x >= 0 && x < this.game.board.width
-      && y >= 0 && y < this.game.board.height
-      && this.game.myColor === this.game.board.curState) {
-      this.game.emit("put", { x: x, y: y });
+    if (x >= 0 && x < this.board.width
+      && y >= 0 && y < this.board.height
+      && this.myState === this.board.curState
+      && this.onPut !== null) {
+      this.onPut(x, y);
     }
   }
 
   onMouseMove(x: number, y: number) {
-    if (x < 0 || x >= this.game.board.width || y < 0 || y >= this.game.board.height) {
+    if (x < 0 || x >= this.board.width || y < 0 || y >= this.board.height) {
       this.mouse_at = null;
     } else {
       this.mouse_at = new Vec2(x, y);
@@ -125,10 +142,10 @@ export class BoardCanvas{
     const t = this.cxt.fillStyle;
     this.cxt.fillStyle = fillStyle;
     this.cxt.fillRect(
-      this.elem.width * x,
-      this.elem.height * y,
-      this.elem.width * w,
-      this.elem.height * h);
+      canvas.width * x,
+      canvas.height * y,
+      canvas.width * w,
+      canvas.height * h);
     // if (fillStyle === 'rgba(255,0,0,0.5)') {
     //   console.log(t,this.cxt.fillStyle,
     //     this.elem.width * x,
@@ -147,10 +164,10 @@ export class BoardCanvas{
     this.cxt.strokeStyle = strokeStyle;
     this.cxt.lineWidth = lineWidth;
     this.drawEllipseAt(
-      cx * this.elem.width,
-      cy * this.elem.height,
-      width * this.elem.width,
-      height * this.elem.height
+      cx * canvas.width,
+      cy * canvas.height,
+      width * canvas.width,
+      height * canvas.height
     );
     this.cxt.fillStyle = f;
     this.cxt.strokeStyle = s;
@@ -177,5 +194,10 @@ export class BoardCanvas{
     this.cxt.closePath();
     this.cxt.fill();
     this.cxt.stroke();
+  }
+
+  onExit() {
+    document.getElementById("wrapper")!.style.display = "none";
+    clearInterval(this.update);
   }
 }

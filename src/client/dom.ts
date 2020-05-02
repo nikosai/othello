@@ -49,6 +49,8 @@ export class DOMControl{
               a.addEventListener("click", () => {
                 roomlist.emit("stop");
                 watch.emit("watch", { id: m.id });
+                M.Modal.getInstance(modal).close();
+                M.toast({ html: `観戦に入りました` });
               })
               const div = document.createElement("div");
               div.className = "matchInfo grey-text text-darken-4";
@@ -85,14 +87,14 @@ export class DOMControl{
           return;
           // name = "ゲスト";
         }
-        socket.once("matched", (res: { name: string, board: RawBoard, color: State }) => {
-          Util.log(`[matched] ${res.board}`)
+        socket.once("matched", (res: { name: string, info: MatchInfo, color: State }) => {
+          Util.log(`[matched] ${res.info}`)
           M.toast({ html: `${res.name}さんと対戦開始！ あなたは${res.color === State.Black ? "黒" : "白"}番です` });
           document.getElementById("my-color")!.className = (res.color === State.Black ? "black stone" : "white stone");
           document.getElementById("enemy-color")!.className = (res.color === State.Black ? "white stone" : "black stone");
           document.getElementById("my-name")!.innerText = name;
           document.getElementById("enemy-name")!.innerText = res.name;
-          new Game(socket, res.color, res.board);
+          new Game(socket, res.color, res.info);
           socket.once("enemyDisconnected", () => {
             Util.log(`[enemyDisconnected]`);
             DOMControl.onError(`対戦相手（${res.name}さん）との通信が切断されました`);

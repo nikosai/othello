@@ -1,50 +1,38 @@
-import { RawBoard, State, Util } from "../util";
+import { RawBoard, State, Util, MatchInfo } from "../util";
 import { Board } from "../board";
 import { BoardCanvas } from "./canvas";
 import M from "materialize-css";
 
-const canvas = <HTMLCanvasElement>document.getElementById("canvas")!;
 
 export class Game {
   myColor: State;
-  board: Board;
   private socket: SocketIOClient.Socket;
   eventSet: Set<string>;
   canvas: BoardCanvas;
   waitingTurn: boolean;
-  constructor(socket: SocketIOClient.Socket, myColor: State, board: RawBoard) {
-    document.getElementById("wrapper")!.style.display = "block";
-    this.board = new Board(board);
-    this.canvas = new BoardCanvas(canvas, this);
+  constructor(socket: SocketIOClient.Socket, myColor: State, info: MatchInfo) {
+    this.canvas = new BoardCanvas(info, myColor, (x,y)=>{
+      this.emit("put", { x: x, y: y });
+    });
     this.socket = socket;
     this.myColor = myColor;
     this.eventSet = new Set();
     this.waitingTurn = true;
 
-    this.on("gameEnd", (res: { board: RawBoard, stones: number, enemy: number }) => {
-      Util.log(`[gameEnd] ${res.board}`);
-      this.board = new Board(res.board, this.myColor);
-      const d = res.stones - res.enemy;
-      let str = `試合終了！ ${res.stones}対${res.enemy}で勝負差${Math.abs(d)}の`
-      if (d >= 54) str += "完勝";
-      else if (d >= 40) str += "圧勝";
-      else if (d >= 26) str += "大勝";
-      else if (d >= 12) str += "激戦勝";
-      else if (d >= 2) str += "接戦勝";
-      else if (d == 0) str += "引き分け";
-      else if (d >= -10) str += "接戦負";
-      else if (d >= -24) str += "激戦負";
-      else if (d >= -38) str += "大敗";
-      else if (d >= -52) str += "惨敗";
-      else str += "沈黙";
-      str += "です";
+    this.on("gameEnd", (res: { info: MatchInfo }) => {
+      Util.log(`[gameEnd] ${res.info}`);
+      this.setInfo(res.info);
+      const me = this.myColor === State.Black ? res.info.black : res.info.white;
+      const enemy = this.myColor === State.Black ? res.info.white : res.info.black;
+      const d = me.count - enemy.count;
+      let str = `試合終了！ ${me.count}対${enemy.count}で勝負差${Math.abs(d)}の${Util.calcResult(d)}です`
       if (d > 0) str += "！";
       else if (d < 0) str += "……";
       M.toast({ html: str });
       this.finalize();
     })
 
-    this.on("turn", (res: { board: RawBoard, enemySkipped: boolean }) => {
+    this.on("turn", (res: { info:MatchInfo, enemySkipped: boolean }) => {
       const f = () => {
         if (!this.waitingTurn) {
           setTimeout(f, 100);
@@ -52,7 +40,7 @@ export class Game {
         }
         Util.log(`[turn] ${res}`)
         this.waitingTurn = false;
-        this.board = new Board(res.board, this.myColor);
+        this.setInfo(res.info);
         if (res.enemySkipped) {
           M.toast({ html: "相手はどこにも置けないのでパスしました" });
         }
@@ -60,18 +48,18 @@ export class Game {
       };
       f();
     })
-    this.on("skip", (res: { board: RawBoard }) => {
+    this.on("skip", (res: { info: MatchInfo }) => {
       Util.log(`[skip] ${res}`);
       if (!this.myColor) {
         console.error("Error: this.myColor is undefined.");
         return;
       }
-      this.board = new Board(res.board, Util.reverse(this.myColor));
+      this.setInfo(res.info);
       M.toast({ html: "どこにも置けないのでパスしました" });
     })
-    this.on("putSuccess", (res: { board: RawBoard }) => {
+    this.on("putSuccess", (res: { info: MatchInfo }) => {
       Util.log(`[putSuccess] ${res}`)
-      this.board = new Board(res.board, Util.reverse(this.myColor));
+      this.setInfo(res.info);
       this.waitingTurn = true;
     })
     this.on("putFail", () => {
@@ -80,8 +68,8 @@ export class Game {
     })
   }
 
-  isMyTurn() {
-    return this.myColor === this.board.curState;
+  setInfo(info: MatchInfo) {
+    this.canvas.setInfo(info);
   }
 
   on(event: string, fn: Function) {

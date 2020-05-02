@@ -1,6 +1,6 @@
 import { Player } from "../player";
 import { Board } from "../../board";
-import { State, Util } from "../../util";
+import { State, Util, MatchInfo } from "../../util";
 
 // WebUIのサーバ側
 export class WebUIPlayer extends Player {
@@ -10,10 +10,10 @@ export class WebUIPlayer extends Player {
     this.socket = s;
   }
 
-  match(enemy: Player, board: Board, color: State) {
+  match(enemy: Player, info: MatchInfo, color: State) {
     this.enemy = enemy;
     this.color = color;
-    this.socket.emit("matched", { name: enemy.name, board: board.getBoard(), color: color });
+    this.socket.emit("matched", { name: enemy.name, info: info, color: color });
   }
 
   isConnected() {
@@ -24,12 +24,12 @@ export class WebUIPlayer extends Player {
     return this.isConnected() && this.enemy === undefined;
   }
 
-  async onMyTurn(board: Board, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
-    this.socket.emit("turn", { board: board.getBoard(), enemySkipped: enemySkipped ?? false });
+  async onMyTurn(info:MatchInfo, onPut: (x: number, y: number) => Promise<Board | null>, enemySkipped?: boolean) {
+    this.socket.emit("turn", { info: info, enemySkipped: enemySkipped ?? false });
     const listener = async (res: { x: number, y: number }) => {
       let board = await onPut(res.x, res.y);
       if (board) {
-        this.socket.emit("putSuccess", { board: board.getBoard() })
+        this.socket.emit("putSuccess", { info: info })
       } else {
         this.socket.emit("putFail");
         this.socket.once("put", listener);
@@ -42,17 +42,17 @@ export class WebUIPlayer extends Player {
     if (this.isConnected()) this.socket.emit("enemyDisconnected");
   }
 
-  skip(board: Board) {
-    this.socket.emit("skip", { board: board.getBoard() });
+  skip(info: MatchInfo) {
+    this.socket.emit("skip", { info: info });
   }
 
-  end(board: Board) {
+  end(info: MatchInfo) {
     if (this.color === undefined) {
       console.error("Error: this.color is undefined");
       return;
     }
     this.socket.emit("gameEnd", {
-      board: board.getBoard(), stones: board.count(this.color), enemy: board.count(Util.reverse(this.color))
+      info: info
     });
   }
 }
