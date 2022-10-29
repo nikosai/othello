@@ -55,7 +55,7 @@ export class Board {
     }
     return board;
   }
-  // どこにも置けない状態か
+  // どこにも置けない状態か 
   checkSkipped():Board|null {
     for (let x = 0; x < this.width; x++){
       for (let y = 0; y < this.height; y++){
